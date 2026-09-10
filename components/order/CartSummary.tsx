@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
 import { track } from "@/lib/analytics";
+import { CartUpsells } from "@/components/order/CartUpsells";
 
 export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
   const { lines, removeLine, setQuantity, subtotal, lineTotal, hydrated } = useCart();
@@ -70,6 +71,8 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
           </li>
         ))}
       </ul>
+
+      <CartUpsells lines={lines} />
 
       <div className="flex items-center justify-between border-t border-border pt-4">
         <span className="font-semibold text-charcoal">Subtotaal</span>

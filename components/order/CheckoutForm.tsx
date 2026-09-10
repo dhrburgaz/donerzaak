@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/Button";
 import { Price } from "@/components/ui/Price";
 import { formatPrice } from "@/lib/format";
 import { getOrderProvider } from "@/lib/order-provider";
-import type { FulfillmentMethod, OrderPayload } from "@/types";
+import type { AppliedCoupon, FulfillmentMethod, OrderPayload } from "@/types";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
+import { validateCoupon, markOrderPlaced } from "@/lib/coupons";
+import { incrementStamp } from "@/lib/loyalty";
 
 const DELIVERY_FEE = 2.5;
 
@@ -52,6 +54,9 @@ export function CheckoutForm() {
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
   const router = useRouter();
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -78,8 +83,27 @@ export function CheckoutForm() {
     return next;
   }
 
-  const deliveryFee = form.fulfillment === "bezorgen" ? DELIVERY_FEE : 0;
-  const total = subtotal + deliveryFee;
+  const deliveryFee =
+    form.fulfillment === "bezorgen" && appliedCoupon?.type !== "free-delivery" ? DELIVERY_FEE : 0;
+  const discountAmount = appliedCoupon && appliedCoupon.type !== "free-delivery" ? appliedCoupon.discountAmount : 0;
+  const total = Math.max(0, subtotal - discountAmount + deliveryFee);
+
+  function handleApplyCoupon() {
+    const result = validateCoupon(couponInput, { subtotal, fulfillment: form.fulfillment });
+    if ("error" in result) {
+      setCouponError(result.error);
+      setAppliedCoupon(null);
+      return;
+    }
+    setAppliedCoupon(result.coupon);
+    setCouponError(null);
+  }
+
+  function handleRemoveCoupon() {
+    setAppliedCoupon(null);
+    setCouponInput("");
+    setCouponError(null);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -109,6 +133,7 @@ export function CheckoutForm() {
       notes: form.notes || undefined,
       subtotal,
       deliveryFee,
+      discount: appliedCoupon ?? undefined,
       total,
     };
 
@@ -123,11 +148,14 @@ export function CheckoutForm() {
         // sessionStorage unavailable — confirmation page falls back to URL params.
       }
       clearCart();
+      markOrderPlaced();
+      const stampCount = incrementStamp();
       const params = new URLSearchParams({
         order: result.orderNumber,
         total: total.toFixed(2),
         method: form.fulfillment,
         demo: result.demo ? "1" : "0",
+        stamps: String(stampCount),
       });
       router.push(`/bestelling/gelukt?${params.toString()}`);
     } catch {
@@ -323,14 +351,74 @@ export function CheckoutForm() {
             </li>
           ))}
         </ul>
+        <div className="flex flex-col gap-2 border-t border-border pt-3">
+          {appliedCoupon ? (
+            <div className="flex items-center justify-between gap-2 rounded-lg bg-herb/10 px-3 py-2 text-sm">
+              <span className="font-medium text-forest">
+                Coupon {appliedCoupon.code} toegepast — {appliedCoupon.description}
+              </span>
+              <button
+                type="button"
+                onClick={handleRemoveCoupon}
+                className="text-xs font-medium text-muted underline underline-offset-2 hover:text-red"
+              >
+                Verwijderen
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="Couponcode"
+                  className="h-10 flex-1 rounded-lg border border-border bg-warm-white px-3 text-sm uppercase placeholder:normal-case placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  className="h-10 shrink-0 rounded-lg border border-charcoal/15 px-4 text-sm font-semibold text-charcoal hover:border-charcoal/35"
+                >
+                  Toepassen
+                </button>
+              </div>
+              {couponError && (
+                <p className="text-xs font-medium text-red" role="alert">
+                  {couponError}
+                </p>
+              )}
+              <p className="text-xs text-muted">
+                Demo-codes om te proberen: WELKOM10, GRATISBEZORGING, FRESH5.
+              </p>
+            </div>
+          )}
+        </div>
+
         <div className="flex flex-col gap-1 border-t border-border pt-3 text-sm">
           <div className="flex justify-between text-charcoal/80">
             <span>Subtotaal</span>
             <span>{formatPrice(subtotal)}</span>
           </div>
+          {discountAmount > 0 && (
+            <div className="flex justify-between text-herb">
+              <span>Korting</span>
+              <span>−{formatPrice(discountAmount)}</span>
+            </div>
+          )}
           <div className="flex justify-between text-charcoal/80">
             <span>Bezorgkosten</span>
-            <span>{deliveryFee > 0 ? formatPrice(deliveryFee) : "—"}</span>
+            <span>
+              {form.fulfillment === "bezorgen" ? (
+                appliedCoupon?.type === "free-delivery" ? (
+                  <span className="text-herb">Gratis</span>
+                ) : (
+                  formatPrice(DELIVERY_FEE)
+                )
+              ) : (
+                "—"
+              )}
+            </span>
           </div>
           <div className="flex justify-between pt-1 font-display text-base font-bold text-forest">
             <span>Totaal</span>

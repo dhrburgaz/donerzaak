@@ -67,6 +67,10 @@ item("kapsalon", "Kapsalon Kipdöner", 11.95, "Kipdöner, friet, kaas, ...", {
 - `modifiers`: koppel `meatModifiers`, `vegModifiers` of `schotelBaseGroup` voor
   saus/extra's-keuzes, of laat leeg voor een simpel product (bijv. een blikje
   cola).
+- `allergens`: lijst van allergeencodes uit `data/allergens.ts`, bijv.
+  `allergens: ["gluten", "milk"]`. Leeg = "nog niet bevestigd" in de UI.
+  Vul dit per gerecht in zodra je de allergenen van dat product zeker weet —
+  dit is wettelijk verplicht voor onverpakt eten dat je online verkoopt.
 
 **Voor productie:** maak een los bestand `data/menu.ts` met echte producten
 zonder `demo: true`, of laat een ontwikkelaar de `demo: true` items
@@ -125,3 +129,19 @@ een tijdelijk wordmark. Vervang dit:
 Alle productfoto's zijn nu ontwerp-placeholders (kleurverloop + naam), geen
 echte foto's — zie `IMAGE_REQUIREMENTS.md` en `IMAGE_SOURCES.md` voor de
 volledige lijst en hoe je ze vervangt.
+
+## 11. Demo-coupons
+
+Bestand: `data/coupons.demo.ts`. Voeg een object toe met `code`, `type`
+(`"percentage"`, `"fixed"` of `"free-delivery"`), `value` en een
+`description`. Optioneel: `minOrder`, `firstOrderOnly`, `expiresAt`. Dit
+werkt volledig in de browser (geen echte gebruikslimiet per klant) — prima
+voor een demo/verkoopgesprek, niet voor echte kortingsacties. Zie
+PRODUCTION_CHECKLIST.md.
+
+## 12. Digitale stempelkaart
+
+Bestand: `lib/loyalty.ts` → `STAMPS_REQUIRED` (aantal stempels) en
+`REWARD_DESCRIPTION` (wat de klant krijgt). Telt nu lokaal in de browser
+mee, niet per account — zie PRODUCTION_CHECKLIST.md voor wat nodig is om
+dit als een echte klantenbeloning te gebruiken.

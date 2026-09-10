@@ -8,6 +8,7 @@ import { Price } from "@/components/ui/Price";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/lib/toast-context";
 import { formatPrice } from "@/lib/format";
+import { allergenLabels } from "@/data/allergens";
 
 type Selections = Record<string, string[]>;
 
@@ -176,6 +177,19 @@ export function MenuItemDialog({
           <h2 className="mt-3 font-display text-2xl font-bold text-forest">{item.name}</h2>
           <p className="mt-1 text-sm text-charcoal/70">{item.description}</p>
           <Price amount={item.price} className="mt-2 block text-lg text-charcoal" />
+
+          <div className="mt-3 rounded-xl border border-border bg-cream/40 px-3.5 py-2.5 text-sm">
+            <span className="font-semibold text-charcoal">Allergenen: </span>
+            {item.allergens && item.allergens.length > 0 ? (
+              <span className="text-charcoal/80">
+                {item.allergens.map((a) => allergenLabels[a]).join(", ")}
+              </span>
+            ) : (
+              <span className="text-muted">
+                Nog niet bevestigd door de eigenaar — vraag ons ernaar voordat je bestelt.
+              </span>
+            )}
+          </div>
 
           <div className="mt-5 flex flex-col gap-5">
             {(item.modifiers ?? []).map((group) => (

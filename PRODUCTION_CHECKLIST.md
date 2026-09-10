@@ -43,7 +43,12 @@ build-fout als een aantal van deze punten nog openstaat.
 - [ ] Echte menu-items en prijzen ingevoerd (huidige data in
       `data/menu.demo.ts` is expliciet gemarkeerd `demo: true` en gebaseerd
       op een Dordrecht-benchmark, geen officiële Fresh & Tasty-prijzen)
-- [ ] Allergie-informatie geverifieerd (nu: "Vraag ons naar allergenen.")
+- [ ] Allergie-informatie per gerecht ingevuld. Structuur staat klaar
+      (`AllergenCode` in `types/index.ts`, labels in `data/allergens.ts`,
+      `item.allergens` op elk product in `data/menu.demo.ts`) maar is voor
+      elk item leeg gelaten — vul deze in vóórdat de site live gaat.
+      Wettelijk verplicht bij online verkoop van onverpakte levensmiddelen
+      (NVWA, 14 allergenencategorieën).
 - [ ] Beschikbaarheid (`available`) per item gecontroleerd
 
 ## Foto's
@@ -62,6 +67,24 @@ build-fout als een aantal van deze punten nog openstaat.
       Uber Eats/externe bestel-URL, of Mollie/Stripe/iDEAL)
 - [ ] Betaalmethodes in `/checkout` kloppen met de daadwerkelijk
       ondersteunde methodes
+
+## Coupons & loyaliteit (nu client-side demo)
+
+- [ ] `data/coupons.demo.ts` bevat drie voorbeeldcoupons (WELKOM10,
+      GRATISBEZORGING, FRESH5) die volledig in de browser worden
+      gevalideerd (`lib/coupons.ts`). Er is geen echte gebruikslimiet per
+      klant over meerdere apparaten, geen server-validatie en geen
+      admin-beheer. Vervang dit door een server-side coupon-engine
+      (met database, per-klant limiet, categoriebeperking, stacking-regels)
+      voordat er echte kortingen worden weggegeven.
+- [ ] De digitale stempelkaart (`lib/loyalty.ts`) telt stempels lokaal in
+      de browser (localStorage) — dit is per apparaat, niet per klant, en
+      een stempel wordt nu al bij het plaatsen van een demo-bestelling
+      toegekend (niet pas na een bevestigde/betaalde order, en zonder
+      fraudebescherming of admin-correctie). Vervang dit door een
+      account- of telefoonnummer-gekoppelde loyaliteitsservice met een
+      echte backend voordat dit als een echte klantenbeloning wordt
+      aangeboden.
 
 ## Formulieren
 

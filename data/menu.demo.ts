@@ -79,8 +79,21 @@ const schotelBaseGroup: ModifierGroup = {
   ],
 };
 
+const menuUpgradeGroup: ModifierGroup = {
+  id: "menu-upgrade",
+  name: "Maak er een menu van?",
+  required: false,
+  multiSelect: false,
+  options: [
+    { id: "menu-upgrade-no", name: "Nee, alleen dit", priceDelta: 0 },
+    { id: "menu-upgrade-yes", name: "Ja, met friet en een drankje", priceDelta: 3.5 },
+  ],
+};
+
 const meatModifiers = [sauceGroup, extrasGroupMeat];
 const vegModifiers = [sauceGroup, extrasGroupVeg];
+const wrapModifiers = [sauceGroup, extrasGroupMeat, menuUpgradeGroup];
+const wrapModifiersVeg = [sauceGroup, extrasGroupVeg, menuUpgradeGroup];
 
 let counter = 0;
 function id() {
@@ -180,35 +193,35 @@ export const menuItems: MenuItem[] = [
   item("durum", "Dürüm Kipdöner", 9.25, defaultDurumDesc, {
     dietary: ["halal-option"],
     popular: true,
-    modifiers: [...meatModifiers],
+    modifiers: [...wrapModifiers],
   }),
   item("durum", "Dürüm Kalfsdöner", 9.75, defaultDurumDesc, {
     dietary: ["halal-option"],
-    modifiers: [...meatModifiers],
+    modifiers: [...wrapModifiers],
   }),
   item("durum", "Dürüm Shoarma", 9.95, defaultDurumDesc, {
     dietary: ["halal-option"],
-    modifiers: [...meatModifiers],
+    modifiers: [...wrapModifiers],
   }),
   item("durum", "Dürüm Adana", 10.95, defaultDurumDesc, {
     dietary: ["halal-option"],
     spicyLevel: 2,
-    modifiers: [...meatModifiers],
+    modifiers: [...wrapModifiers],
   }),
   item("durum", "Dürüm Köfte", 9.95, defaultDurumDesc, {
     dietary: ["halal-option"],
-    modifiers: [...meatModifiers],
+    modifiers: [...wrapModifiers],
   }),
   item("durum", "Dürüm Kipfilet", 10.5, defaultDurumDesc, {
     dietary: ["halal-option"],
-    modifiers: [...meatModifiers],
+    modifiers: [...wrapModifiers],
   }),
   item(
     "durum",
     "Dürüm Falafel",
     8.25,
     "Versgerolde dürüm met falafel, frisse salade en saus naar keuze.",
-    { dietary: ["vegetarian", "vegan", "halal-option"], modifiers: [...vegModifiers] }
+    { dietary: ["vegetarian", "vegan", "halal-option"], modifiers: [...wrapModifiersVeg] }
   ),
 
   // BROODJES
@@ -217,42 +230,42 @@ export const menuItems: MenuItem[] = [
     "Broodje Kipdöner",
     7.25,
     "Vers afgebakken broodje met kipdöner, salade en saus.",
-    { dietary: ["halal-option"], modifiers: [...meatModifiers] }
+    { dietary: ["halal-option"], modifiers: [...wrapModifiers] }
   ),
   item(
     "broodjes",
     "Broodje Kalfsdöner",
     7.75,
     "Vers afgebakken broodje met kalfsdöner, salade en saus.",
-    { dietary: ["halal-option"], modifiers: [...meatModifiers] }
+    { dietary: ["halal-option"], modifiers: [...wrapModifiers] }
   ),
   item(
     "broodjes",
     "Broodje Shoarma",
     9.75,
     "Vers afgebakken broodje met gekruide shoarma, salade en saus.",
-    { dietary: ["halal-option"], popular: true, modifiers: [...meatModifiers] }
+    { dietary: ["halal-option"], popular: true, modifiers: [...wrapModifiers] }
   ),
   item(
     "broodjes",
     "Broodje Köfte",
     8.75,
     "Vers afgebakken broodje met köfte, salade en saus.",
-    { dietary: ["halal-option"], modifiers: [...meatModifiers] }
+    { dietary: ["halal-option"], modifiers: [...wrapModifiers] }
   ),
   item(
     "broodjes",
     "Broodje Kipfilet",
     9.25,
     "Vers afgebakken broodje met gegrilde kipfilet, salade en saus.",
-    { dietary: ["halal-option"], modifiers: [...meatModifiers] }
+    { dietary: ["halal-option"], modifiers: [...wrapModifiers] }
   ),
   item(
     "broodjes",
     "Broodje Falafel",
     6.95,
     "Vers afgebakken broodje met falafel, salade en saus.",
-    { dietary: ["vegetarian", "vegan", "halal-option"], modifiers: [...vegModifiers] }
+    { dietary: ["vegetarian", "vegan", "halal-option"], modifiers: [...wrapModifiersVeg] }
   ),
 
   // TURKSE PIZZA
@@ -392,7 +405,7 @@ export const menuItems: MenuItem[] = [
     "Crispy Chicken Burger",
     8.95,
     "Krokante kipfilet, frisse salade en huissaus in een zacht broodje.",
-    { dietary: ["halal-option"], modifiers: [...meatModifiers] }
+    { dietary: ["halal-option"], modifiers: [...wrapModifiers] }
   ),
   item(
     "burgers",
@@ -422,14 +435,14 @@ export const menuItems: MenuItem[] = [
     "Falafel Dürüm",
     8.25,
     "Versgerolde dürüm met falafel, frisse salade en saus naar keuze.",
-    { dietary: ["vegetarian", "vegan", "halal-option"], modifiers: [...vegModifiers] }
+    { dietary: ["vegetarian", "vegan", "halal-option"], modifiers: [...wrapModifiersVeg] }
   ),
   item(
     "vegetarisch",
     "Falafel Broodje",
     6.95,
     "Vers afgebakken broodje met falafel, salade en saus.",
-    { dietary: ["vegetarian", "vegan", "halal-option"], modifiers: [...vegModifiers] }
+    { dietary: ["vegetarian", "vegan", "halal-option"], modifiers: [...wrapModifiersVeg] }
   ),
   item(
     "vegetarisch",
@@ -450,7 +463,7 @@ export const menuItems: MenuItem[] = [
     "Grilled Veggie Wrap",
     8.95,
     "Wrap met gegrilde groenten, frisse salade en saus.",
-    { dietary: ["vegetarian", "vegan"], modifiers: [...vegModifiers] }
+    { dietary: ["vegetarian", "vegan"], modifiers: [...wrapModifiersVeg] }
   ),
 
   // KINDERMENU

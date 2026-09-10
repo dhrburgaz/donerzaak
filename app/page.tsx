@@ -3,6 +3,7 @@ import { Hero } from "@/components/sections/Hero";
 import { QuickActions } from "@/components/sections/QuickActions";
 import { Bestsellers } from "@/components/sections/Bestsellers";
 import { WhyFreshTasty } from "@/components/sections/WhyFreshTasty";
+import { LoyaltyTeaser } from "@/components/sections/LoyaltyTeaser";
 import { MenuTeaser } from "@/components/sections/MenuTeaser";
 import { OrderingCta } from "@/components/sections/OrderingCta";
 import { CateringTeaser } from "@/components/sections/CateringTeaser";
@@ -24,6 +25,7 @@ export default function HomePage() {
       <QuickActions />
       <Bestsellers />
       <WhyFreshTasty />
+      <LoyaltyTeaser />
       <MenuTeaser />
       <OrderingCta />
       <CateringTeaser />

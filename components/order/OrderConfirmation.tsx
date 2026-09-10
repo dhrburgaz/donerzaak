@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
 import type { OrderPayload, OrderResult } from "@/types";
+import { StampCard } from "@/components/loyalty/StampCard";
 
 type StoredOrder = { payload: OrderPayload; result: OrderResult };
 
@@ -87,6 +88,12 @@ export function OrderConfirmation() {
                   {stored.payload.fulfillment} · {stored.payload.paymentMethod}
                 </span>
               </div>
+              {stored.payload.discount && (
+                <div className="flex justify-between text-sm text-herb">
+                  <span>Coupon {stored.payload.discount.code}</span>
+                  <span>−{formatPrice(stored.payload.discount.discountAmount)}</span>
+                </div>
+              )}
             </>
           ) : (
             method && <p className="text-sm capitalize text-charcoal/80">Methode: {method}</p>
@@ -99,6 +106,8 @@ export function OrderConfirmation() {
           )}
         </div>
       )}
+
+      <StampCard className="mt-8 text-left" />
 
       <Button href="/menu" size="lg" className="mt-8">
         Terug naar het menu

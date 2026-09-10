@@ -2,6 +2,23 @@ export type SiteMode = "demo" | "production";
 
 export type DietaryTag = "halal-option" | "vegetarian" | "vegan";
 
+/** The 14 EU-mandated allergen categories (Verordening (EU) 1169/2011). */
+export type AllergenCode =
+  | "gluten"
+  | "crustaceans"
+  | "eggs"
+  | "fish"
+  | "peanuts"
+  | "soy"
+  | "milk"
+  | "nuts"
+  | "celery"
+  | "mustard"
+  | "sesame"
+  | "sulphites"
+  | "lupin"
+  | "molluscs";
+
 export type ModifierOption = {
   id: string;
   name: string;
@@ -39,6 +56,10 @@ export type MenuItem = {
   available: boolean;
   demo: boolean;
   modifiers?: ModifierGroup[];
+  /** Structured allergen data. Left empty/undefined until the owner
+   * explicitly confirms it — never inferred from the name or ingredients.
+   * See PRODUCTION_CHECKLIST.md. */
+  allergens?: AllergenCode[];
 };
 
 export type CartModifierSelection = {
@@ -61,6 +82,27 @@ export type CartLine = {
 
 export type FulfillmentMethod = "afhalen" | "bezorgen";
 
+export type CouponType = "percentage" | "fixed" | "free-delivery";
+
+export type Coupon = {
+  code: string;
+  type: CouponType;
+  value: number;
+  description: string;
+  minOrder?: number;
+  firstOrderOnly?: boolean;
+  expiresAt?: string;
+  maxRedemptions?: number;
+};
+
+export type AppliedCoupon = {
+  code: string;
+  type: CouponType;
+  value: number;
+  description: string;
+  discountAmount: number;
+};
+
 export type OrderPayload = {
   lines: CartLine[];
   fulfillment: FulfillmentMethod;
@@ -81,6 +123,7 @@ export type OrderPayload = {
   notes?: string;
   subtotal: number;
   deliveryFee: number;
+  discount?: AppliedCoupon;
   total: number;
 };
 
