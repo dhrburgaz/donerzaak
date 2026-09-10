@@ -2,6 +2,8 @@ import type { MetadataRoute } from "next";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+export const dynamic = "force-static";
+
 const routes: { path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }[] = [
   { path: "/", priority: 1, changeFrequency: "weekly" },
   { path: "/menu", priority: 0.9, changeFrequency: "weekly" },

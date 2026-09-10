@@ -25,13 +25,13 @@ test.describe("Smoke", () => {
   test("primary navigation links work", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("navigation", { name: "Hoofdnavigatie" }).getByRole("link", { name: "Menu" }).click();
-    await expect(page).toHaveURL(/\/menu$/);
+    await expect(page).toHaveURL(/\/menu\/?$/);
 
     await page.getByRole("navigation", { name: "Hoofdnavigatie" }).getByRole("link", { name: "Contact" }).click();
-    await expect(page).toHaveURL(/\/contact$/);
+    await expect(page).toHaveURL(/\/contact\/?$/);
 
     await page.getByRole("navigation", { name: "Hoofdnavigatie" }).getByRole("link", { name: "Catering" }).click();
-    await expect(page).toHaveURL(/\/catering$/);
+    await expect(page).toHaveURL(/\/catering\/?$/);
   });
 
   test("item can be added to cart and cart count changes", async ({ page }) => {
