@@ -7,7 +7,8 @@ export function FinalCta() {
       <FoodImage
         label="Fresh & Tasty"
         seed="final-cta"
-        className="absolute inset-0 opacity-25"
+        hideIcon
+        className="absolute inset-0 opacity-40"
         textClassName="hidden"
       />
       <div className="relative mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 py-20 text-center sm:px-6 lg:px-8">

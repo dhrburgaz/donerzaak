@@ -24,6 +24,7 @@ export function LocationSection() {
       <div className="grid gap-8 lg:grid-cols-2 lg:items-center">
         <FoodImage
           label="Fresh & Tasty Dordrecht"
+          icon="storefront"
           seed="location"
           className="aspect-[4/3] rounded-3xl lg:aspect-[5/4]"
           textClassName="text-base"

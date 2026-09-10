@@ -1,6 +1,7 @@
 import { getPopularItems } from "@/data/menu";
 import { FoodCard } from "@/components/ui/FoodCard";
 import { Button } from "@/components/ui/Button";
+import { Reveal } from "@/components/ui/Reveal";
 
 export function Bestsellers() {
   const items = getPopularItems(6);
@@ -22,8 +23,10 @@ export function Bestsellers() {
         </Button>
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {items.map((item) => (
-          <FoodCard key={item.id} item={item} />
+        {items.map((item, i) => (
+          <Reveal key={item.id} delayMs={i * 60}>
+            <FoodCard item={item} />
+          </Reveal>
         ))}
       </div>
       <Button href="/menu" variant="outline" className="mt-6 w-full sm:hidden">

@@ -28,6 +28,7 @@ export default function AboutPage() {
       <div className="mt-8 grid gap-10 lg:grid-cols-2 lg:items-center">
         <FoodImage
           label="Fresh & Tasty keuken"
+          icon="skewerPlate"
           seed="over-ons"
           className="aspect-[4/3] rounded-3xl"
           textClassName="text-base"

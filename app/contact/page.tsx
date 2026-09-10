@@ -41,6 +41,7 @@ export default function ContactPage() {
           <div>
             <FoodImage
               label="Kaartweergave — open in Google Maps"
+              icon="storefront"
               seed="contact-map"
               className="aspect-[4/3] rounded-3xl"
               textClassName="text-sm"

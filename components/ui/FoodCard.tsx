@@ -39,7 +39,7 @@ export function FoodCard({ item }: { item: MenuItem }) {
       >
         <FoodImage
           label={item.name}
-          seed={item.id}
+          item={item}
           className="aspect-[4/3] transition-transform duration-300 group-hover:scale-[1.03]"
         />
       </button>

@@ -40,6 +40,7 @@ export default function CateringPage() {
           </div>
           <FoodImage
             label="Catering — voorbeeld"
+            icon="skewerPlate"
             seed="catering-hero"
             className="aspect-[4/3] rounded-3xl"
             textClassName="text-base"

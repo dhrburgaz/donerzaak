@@ -1,12 +1,19 @@
 # Foto-vereisten voor productie
 
-Alle beeldvlakken op deze site tonen op dit moment een ontworpen
-gradiënt-placeholder (`components/ui/FoodImage.tsx`) in plaats van een echte
-foto. Dit is bewust: er was in deze omgeving geen toegang tot
-freshtasty.nl en er zijn geen door de eigenaar aangeleverde bestanden, en
-gokken naar stockfoto-URLs zonder duidelijke licentie is onveilig (dode
-links, verkeerde foto's, onduidelijke rechten). Zie `IMAGE_SOURCES.md` voor
-hoe je dit wél goed oplost.
+Alle beeldvlakken op deze site tonen op dit moment een illustratief
+"icon-op-kleurkaart" ontwerp (`components/ui/FoodImage.tsx` +
+`components/ui/FoodIcons.tsx`) in plaats van een echte foto: elk gerecht
+krijgt een op maat getekend icoon (döner-wrap, kapsalon-bak, pizzapunt,
+burger, etc. — zie `FoodIcons.tsx` voor de volledige set en de
+naam/categorie-matching) op een kleur passend bij de categorie. Dit is
+bewust zo gebouwd in plaats van foto's: er was in deze omgeving geen
+toegang tot freshtasty.nl, geen door de eigenaar aangeleverde bestanden en
+geen tool om AI-afbeeldingen te genereren. Gokken naar stockfoto-URLs
+zonder duidelijke licentie is bovendien onveilig (dode links, verkeerde
+foto's, onduidelijke rechten). Zie `IMAGE_SOURCES.md` voor hoe je dit wél
+goed oplost. De illustraties zijn een bewuste ontwerpkeuze om de site nu al
+levendig en smakelijk te laten aanvoelen — vervang ze naar wens door echte
+foto's, of houd de iconen aan als vast onderdeel van de huisstijl.
 
 ## Wat moet vervangen worden voordat de site live gaat
 

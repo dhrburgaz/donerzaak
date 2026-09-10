@@ -47,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="nl"
+      data-scroll-behavior="smooth"
       className={`${bricolage.variable} ${manrope.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-warm-white text-charcoal">

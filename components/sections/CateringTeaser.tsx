@@ -25,6 +25,7 @@ export function CateringTeaser() {
         </div>
         <FoodImage
           label="Catering schotels"
+          icon="skewerPlate"
           seed="catering-teaser"
           className="min-h-[220px] lg:min-h-full"
           textClassName="text-base"

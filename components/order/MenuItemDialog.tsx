@@ -151,7 +151,7 @@ export function MenuItemDialog({
         className="absolute inset-x-0 bottom-0 flex max-h-[92vh] flex-col overflow-hidden rounded-t-3xl bg-warm-white shadow-2xl sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:max-h-[85vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl"
       >
         <div className="relative">
-          <FoodImage label={item.name} seed={item.id} className="aspect-[16/9]" />
+          <FoodImage label={item.name} item={item} className="aspect-[16/9]" />
           <button
             ref={closeButtonRef}
             type="button"

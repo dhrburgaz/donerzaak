@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { menuCategories } from "@/data/menu.demo";
 import { FoodImage } from "@/components/ui/FoodImage";
+import { Reveal } from "@/components/ui/Reveal";
 
 const featured = [
   "kapsalon",
@@ -23,19 +24,17 @@ export function MenuTeaser() {
         Van kapsalon tot Turkse pizza
       </h2>
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {categories.map((category) => (
-          <Link
-            key={category.id}
-            href={`/menu#${category.slug}`}
-            className="group flex flex-col gap-2"
-          >
-            <FoodImage
-              label={category.name}
-              seed={category.id}
-              className="aspect-square rounded-2xl transition-transform group-hover:scale-[1.03]"
-              textClassName="text-sm"
-            />
-          </Link>
+        {categories.map((category, i) => (
+          <Reveal key={category.id} delayMs={i * 50}>
+            <Link href={`/menu#${category.slug}`} className="group flex flex-col gap-2">
+              <FoodImage
+                label={category.name}
+                item={{ name: category.name, categoryId: category.id }}
+                className="aspect-square rounded-2xl transition-transform group-hover:scale-[1.03]"
+                textClassName="text-sm"
+              />
+            </Link>
+          </Reveal>
         ))}
       </div>
     </section>
