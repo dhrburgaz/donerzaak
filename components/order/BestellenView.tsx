@@ -1,0 +1,48 @@
+"use client";
+
+import { useState } from "react";
+import type { MenuCategory, MenuItem } from "@/types";
+import { MenuBrowser } from "@/components/menu/MenuBrowser";
+import { CartSummary } from "@/components/order/CartSummary";
+import { CartDrawer } from "@/components/order/CartDrawer";
+import { useCart } from "@/lib/cart-context";
+import { formatPrice } from "@/lib/format";
+
+export function BestellenView({
+  categories,
+  items,
+}: {
+  categories: MenuCategory[];
+  items: MenuItem[];
+}) {
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const { itemCount, subtotal, hydrated } = useCart();
+
+  return (
+    <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-[1fr_360px] lg:items-start lg:gap-8 lg:px-4 lg:py-10 lg:sm:px-6 lg:lg:px-8">
+      <div>
+        <MenuBrowser categories={categories} items={items} />
+      </div>
+
+      <aside className="sticky top-24 hidden rounded-2xl border border-border bg-warm-white p-5 shadow-sm lg:block">
+        <h2 className="font-display text-lg font-bold text-forest">Jouw bestelling</h2>
+        <div className="mt-4">
+          <CartSummary />
+        </div>
+      </aside>
+
+      {hydrated && itemCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(true)}
+          className="fixed inset-x-4 bottom-20 z-40 flex h-13 items-center justify-between rounded-full bg-forest px-5 text-warm-white shadow-lg lg:hidden"
+        >
+          <span className="font-semibold">Bekijk bestelling</span>
+          <span className="font-display font-bold">{formatPrice(subtotal)}</span>
+        </button>
+      )}
+
+      {drawerOpen && <CartDrawer onClose={() => setDrawerOpen(false)} />}
+    </div>
+  );
+}

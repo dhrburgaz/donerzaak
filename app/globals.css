@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand palette — food psychology + existing green logo identity */
+  --brand-forest: #173f32;
+  --brand-herb: #2e7d5b;
+  --brand-cream: #fff7ec;
+  --brand-warm-white: #fffcf7;
+  --brand-charcoal: #171816;
+  --brand-orange: #e96b2c;
+  --brand-amber: #f4b740;
+  --brand-red: #c94b32;
+  --muted: #76756f;
+  --border: #e9e0d4;
+
+  --background: var(--brand-warm-white);
+  --foreground: var(--brand-charcoal);
+
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-forest: var(--brand-forest);
+  --color-herb: var(--brand-herb);
+  --color-cream: var(--brand-cream);
+  --color-warm-white: var(--brand-warm-white);
+  --color-charcoal: var(--brand-charcoal);
+  --color-orange: var(--brand-orange);
+  --color-amber: var(--brand-amber);
+  --color-red: var(--brand-red);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --font-sans: var(--font-body);
+  --font-display: var(--font-display);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Skip link */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  background: var(--brand-forest);
+  color: var(--brand-warm-white);
+  border-radius: 0 0 0.5rem 0;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand-orange);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
