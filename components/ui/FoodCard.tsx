@@ -8,11 +8,14 @@ import { useItemDialog } from "@/lib/item-dialog-context";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/lib/toast-context";
 
-export function FoodCard({ item }: { item: MenuItem }) {
+const tiltClasses = ["rotate-[-1.1deg]", "rotate-[0.7deg]", "rotate-[-0.5deg]"];
+
+export function FoodCard({ item, tiltIndex }: { item: MenuItem; tiltIndex?: number }) {
   const openDialog = useItemDialog();
   const { addLine } = useCart();
   const showToast = useToast();
   const hasModifiers = (item.modifiers ?? []).length > 0;
+  const tilt = tiltIndex != null ? tiltClasses[tiltIndex % tiltClasses.length] : "";
 
   function handleAdd() {
     if (hasModifiers) {
@@ -30,17 +33,19 @@ export function FoodCard({ item }: { item: MenuItem }) {
   }
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-warm-white shadow-sm transition-shadow hover:shadow-md">
+    <div
+      className={`group flex flex-col overflow-hidden rounded-3xl border border-border bg-warm-white shadow-md transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:rotate-0 hover:shadow-2xl ${tilt}`}
+    >
       <button
         type="button"
         onClick={() => openDialog(item)}
-        className="block text-left"
+        className="relative block overflow-hidden text-left"
         aria-label={`${item.name} bekijken`}
       >
-        <FoodImage
-          label={item.name}
-          item={item}
-          className="aspect-[4/3] transition-transform duration-300 group-hover:scale-[1.03]"
+        <FoodImage label={item.name} item={item} className="aspect-[4/3]" />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
         />
       </button>
       <div className="flex flex-1 flex-col gap-2 p-4">
@@ -61,7 +66,7 @@ export function FoodCard({ item }: { item: MenuItem }) {
             type="button"
             onClick={handleAdd}
             disabled={!item.available}
-            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-forest px-4 text-sm font-semibold text-warm-white hover:bg-[#0f2e24] disabled:bg-muted"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-forest px-4 text-sm font-semibold text-warm-white shadow-[0_3px_0_0_#0f2e24] transition-transform hover:bg-[#0f2e24] active:translate-y-0.5 active:shadow-[0_1px_0_0_#0f2e24] disabled:bg-muted disabled:shadow-none"
           >
             {item.available ? "Toevoegen" : "Niet beschikbaar"}
           </button>

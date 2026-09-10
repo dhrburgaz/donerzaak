@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { MenuCategory, MenuItem } from "@/types";
 import { FoodCard } from "@/components/ui/FoodCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { getCategoryGradient } from "@/lib/category-colors";
 
 export function MenuBrowser({
   categories,
@@ -48,20 +49,26 @@ export function MenuBrowser({
             >
               Alles
             </button>
-            {categories.map((category) => (
-              <a
-                key={category.id}
-                href={`#${category.slug}`}
-                onClick={() => setActiveCategory(category.id)}
-                className={`flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-medium transition-colors ${
-                  activeCategory === category.id
-                    ? "bg-forest text-warm-white"
-                    : "bg-cream text-charcoal hover:bg-cream/70"
-                }`}
-              >
-                {category.name}
-              </a>
-            ))}
+            {categories.map((category) => {
+              const [accent] = getCategoryGradient(category.id);
+              const active = activeCategory === category.id;
+              return (
+                <a
+                  key={category.id}
+                  href={`#${category.slug}`}
+                  onClick={() => setActiveCategory(category.id)}
+                  style={{ backgroundColor: active ? accent : `${accent}1F` }}
+                  className={`flex min-h-11 shrink-0 items-center gap-2 rounded-full px-4 text-sm font-medium transition-colors ${
+                    active ? "text-warm-white shadow-sm" : "text-charcoal hover:brightness-95"
+                  }`}
+                >
+                  {!active && (
+                    <span aria-hidden="true" className="h-2 w-2 rounded-full" style={{ backgroundColor: accent }} />
+                  )}
+                  {category.name}
+                </a>
+              );
+            })}
           </div>
           <div className="relative lg:w-64">
             <input
@@ -87,14 +94,20 @@ export function MenuBrowser({
             {visibleCategories.map((category) => {
               const categoryItems = filteredItems.filter((i) => i.categoryId === category.id);
               if (categoryItems.length === 0) return null;
+              const [accent] = getCategoryGradient(category.id);
               return (
                 <section key={category.id} id={category.slug} className="scroll-mt-32">
-                  <h2 className="font-display text-2xl font-bold text-forest sm:text-3xl">
+                  <h2 className="flex items-center gap-3 font-display text-2xl font-bold text-forest sm:text-3xl">
+                    <span
+                      aria-hidden="true"
+                      className="h-7 w-1.5 rounded-full"
+                      style={{ backgroundColor: accent }}
+                    />
                     {category.name}
                   </h2>
-                  <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {categoryItems.map((item) => (
-                      <FoodCard key={item.id} item={item} />
+                  <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                    {categoryItems.map((item, i) => (
+                      <FoodCard key={item.id} item={item} tiltIndex={i} />
                     ))}
                   </div>
                 </section>

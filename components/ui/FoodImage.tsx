@@ -1,5 +1,6 @@
 import type { MenuItem } from "@/types";
 import { FoodIcon, pickIconKind, type IconKind } from "@/components/ui/FoodIcons";
+import { getCategoryGradient } from "@/lib/category-colors";
 
 /**
  * Illustrated dish card — the site's stand-in for photography.
@@ -13,29 +14,6 @@ import { FoodIcon, pickIconKind, type IconKind } from "@/components/ui/FoodIcons
  * IMAGE_REQUIREMENTS.md for swapping in real photos later.
  */
 
-const categoryPalette: Record<string, [string, string]> = {
-  kapsalon: ["#E96B2C", "#C94B32"],
-  durum: ["#2E7D5B", "#173F32"],
-  broodjes: ["#F4B740", "#E96B2C"],
-  "turkse-pizza": ["#C94B32", "#7a2c1c"],
-  grill: ["#173F32", "#3a1610"],
-  pizza: ["#E96B2C", "#9c2f1f"],
-  burgers: ["#C94B32", "#E96B2C"],
-  vegetarisch: ["#2E7D5B", "#0f2e24"],
-  kindermenu: ["#F4B740", "#E96B2C"],
-  bijgerechten: ["#2E7D5B", "#F4B740"],
-  sauzen: ["#76756F", "#3a3a36"],
-  dranken: ["#173F32", "#2E7D5B"],
-  "dessert-koffie": ["#7a2c1c", "#C94B32"],
-};
-
-const fallbackPalette: [string, string][] = [
-  ["#2E7D5B", "#173F32"],
-  ["#E96B2C", "#C94B32"],
-  ["#F4B740", "#E96B2C"],
-  ["#173F32", "#2E7D5B"],
-];
-
 const steamyIcons = new Set<IconKind>([
   "tray",
   "skewerPlate",
@@ -47,12 +25,6 @@ const steamyIcons = new Set<IconKind>([
   "wings",
   "riceBowl",
 ]);
-
-function hashString(seed: string) {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
-  return hash;
-}
 
 type FoodImageProps = {
   label: string;
@@ -76,10 +48,7 @@ export function FoodImage({
   hideIcon = false,
 }: FoodImageProps) {
   const resolvedIcon: IconKind = icon ?? (item ? pickIconKind(item) : pickIconKind({ name: label, categoryId: "" }));
-  const paletteKey = item?.categoryId;
-  const [from, to] =
-    (paletteKey && categoryPalette[paletteKey]) ||
-    fallbackPalette[hashString(seed ?? label) % fallbackPalette.length];
+  const [from, to] = getCategoryGradient(item?.categoryId, seed ?? label);
   const showSteam = steamyIcons.has(resolvedIcon);
 
   return (
@@ -97,6 +66,10 @@ export function FoodImage({
       </svg>
 
       <div className="absolute inset-0 bg-gradient-to-t from-charcoal/35 via-transparent to-white/5" aria-hidden="true" />
+      <div
+        className="absolute -left-1/4 -top-1/2 h-full w-full rounded-full bg-white/25 blur-2xl"
+        aria-hidden="true"
+      />
 
       {showSteam && !hideIcon && (
         <div className="absolute left-1/2 top-[18%] flex -translate-x-1/2 gap-2 opacity-40" aria-hidden="true">
@@ -107,10 +80,12 @@ export function FoodImage({
       )}
 
       {!hideIcon && (
-        <FoodIcon
-          kind={resolvedIcon}
-          className="relative h-[42%] w-[42%] max-h-40 max-w-40 drop-shadow-[0_6px_14px_rgba(0,0,0,0.35)] transition-transform duration-300 ease-out group-hover/food:scale-[1.08] group-hover/food:-rotate-2"
-        />
+        <div className="relative flex h-[58%] w-[58%] max-h-56 max-w-56 items-center justify-center rounded-full bg-warm-white/10 ring-1 ring-inset ring-white/20 transition-transform duration-300 ease-out group-hover/food:scale-[1.06] group-hover/food:-rotate-2">
+          <FoodIcon
+            kind={resolvedIcon}
+            className="h-[72%] w-[72%] drop-shadow-[0_6px_14px_rgba(0,0,0,0.35)]"
+          />
+        </div>
       )}
 
       <span

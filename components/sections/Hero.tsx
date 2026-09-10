@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/Button";
 import { FoodImage } from "@/components/ui/FoodImage";
 import { OpeningStatus } from "@/components/ui/OpeningStatus";
 import { FoodIcon } from "@/components/ui/FoodIcons";
+import { SectionWave } from "@/components/ui/SectionWave";
+import { PopularBadge } from "@/components/ui/DietaryBadge";
 
 const trustPoints = ["Vers bereid", "Halal opties", "Vega & vegan opties", "Dordrecht"];
 
@@ -77,12 +79,12 @@ export function Hero() {
             <FoodImage
               label="Dürüm Adana"
               item={{ name: "Dürüm Adana", categoryId: "durum" }}
-              className="aspect-square rounded-2xl shadow-lg shadow-forest/10"
+              className="aspect-square rotate-[-1.5deg] rounded-2xl shadow-lg shadow-forest/10"
             />
             <FoodImage
               label="Turkse Pizza Mix"
               item={{ name: "Turkse Pizza Mix", categoryId: "turkse-pizza" }}
-              className="aspect-square rounded-2xl shadow-lg shadow-forest/10"
+              className="aspect-square rotate-1 rounded-2xl shadow-lg shadow-forest/10"
             />
           </div>
 
@@ -96,8 +98,14 @@ export function Hero() {
               vers van de grill
             </span>
           </div>
+
+          <div className="absolute -right-3 -top-3 rotate-6 sm:-right-4 sm:-top-4">
+            <PopularBadge />
+          </div>
         </div>
       </div>
+
+      <SectionWave className="text-warm-white" />
     </section>
   );
 }

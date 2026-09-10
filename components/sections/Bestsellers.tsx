@@ -24,8 +24,8 @@ export function Bestsellers() {
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item, i) => (
-          <Reveal key={item.id} delayMs={i * 60}>
-            <FoodCard item={item} />
+          <Reveal key={item.id} delayMs={i * 60} className="h-full">
+            <FoodCard item={item} tiltIndex={i} />
           </Reveal>
         ))}
       </div>

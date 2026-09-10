@@ -5,13 +5,16 @@ type Variant = "primary" | "secondary" | "ghost" | "outline";
 type Size = "md" | "lg" | "sm";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap";
+  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-[background-color,transform,box-shadow] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none disabled:translate-y-0 whitespace-nowrap active:translate-y-0.5";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-orange text-warm-white hover:bg-[#d85f22] active:bg-[#c55a1f]",
-  secondary: "bg-forest text-warm-white hover:bg-[#0f2e24]",
-  outline: "border border-charcoal/20 text-charcoal hover:border-charcoal/40 bg-transparent",
-  ghost: "text-charcoal hover:bg-charcoal/5",
+  primary:
+    "bg-orange text-warm-white shadow-[0_4px_0_0_#a4501c] hover:bg-[#d85f22] active:shadow-[0_1px_0_0_#a4501c]",
+  secondary:
+    "bg-forest text-warm-white shadow-[0_4px_0_0_#0a1f18] hover:bg-[#0f2e24] active:shadow-[0_1px_0_0_#0a1f18]",
+  outline:
+    "border-2 border-charcoal/15 text-charcoal hover:border-charcoal/35 bg-transparent active:translate-y-0",
+  ghost: "text-charcoal hover:bg-charcoal/5 active:translate-y-0",
 };
 
 const sizes: Record<Size, string> = {
