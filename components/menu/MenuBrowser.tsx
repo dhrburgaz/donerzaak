@@ -1,10 +1,20 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { MenuCategory, MenuItem } from "@/types";
+import type { DietaryTag, MenuCategory, MenuItem } from "@/types";
 import { FoodCard } from "@/components/ui/FoodCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { getCategoryGradient } from "@/lib/category-colors";
+import { matchesSearch } from "@/lib/menu-search";
+import { useFavorites } from "@/lib/favorites";
+
+type SortOption = "aanbevolen" | "prijs-op" | "prijs-af" | "populair";
+
+const dietaryFilterOptions: { tag: DietaryTag; label: string }[] = [
+  { tag: "vegetarian", label: "Vegetarisch" },
+  { tag: "vegan", label: "Vegan" },
+  { tag: "halal-option", label: "Halal optie" },
+];
 
 export function MenuBrowser({
   categories,
@@ -15,23 +25,63 @@ export function MenuBrowser({
 }) {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [query, setQuery] = useState("");
+  const [dietaryFilters, setDietaryFilters] = useState<Set<DietaryTag>>(new Set());
+  const [spicyOnly, setSpicyOnly] = useState(false);
+  const [popularOnly, setPopularOnly] = useState(false);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("aanbevolen");
+  const { favorites } = useFavorites();
+
+  function toggleDietary(tag: DietaryTag) {
+    setDietaryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
+      return next;
+    });
+  }
+
+  const hasActiveRefinement =
+    query.trim().length > 0 ||
+    dietaryFilters.size > 0 ||
+    spicyOnly ||
+    popularOnly ||
+    favoritesOnly ||
+    sortBy !== "aanbevolen";
 
   const filteredItems = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return items.filter((item) => {
+    let result = items.filter((item) => {
       const matchesCategory = activeCategory === "all" || item.categoryId === activeCategory;
-      const matchesQuery =
-        q.length === 0 ||
-        item.name.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q);
-      return matchesCategory && matchesQuery;
+      const matchesDietary =
+        dietaryFilters.size === 0 || [...dietaryFilters].every((tag) => item.dietary.includes(tag));
+      const matchesSpicy = !spicyOnly || (item.spicyLevel ?? 0) > 0;
+      const matchesPopular = !popularOnly || item.popular === true;
+      const matchesFavorite = !favoritesOnly || favorites.has(item.id);
+      return (
+        matchesCategory &&
+        matchesSearch(item, query) &&
+        matchesDietary &&
+        matchesSpicy &&
+        matchesPopular &&
+        matchesFavorite
+      );
     });
-  }, [items, activeCategory, query]);
+
+    if (sortBy === "prijs-op") result = [...result].sort((a, b) => a.price - b.price);
+    else if (sortBy === "prijs-af") result = [...result].sort((a, b) => b.price - a.price);
+    else if (sortBy === "populair")
+      result = [...result].sort((a, b) => Number(b.popular ?? false) - Number(a.popular ?? false));
+
+    return result;
+  }, [items, activeCategory, query, dietaryFilters, spicyOnly, popularOnly, favoritesOnly, sortBy, favorites]);
 
   const visibleCategories =
-    activeCategory === "all"
-      ? categories
-      : categories.filter((c) => c.id === activeCategory);
+    activeCategory === "all" ? categories : categories.filter((c) => c.id === activeCategory);
+
+  const filterChipClass = (active: boolean) =>
+    `flex min-h-9 shrink-0 items-center rounded-full border px-3.5 text-sm font-medium transition-colors ${
+      active ? "border-forest bg-forest text-warm-white" : "border-border bg-warm-white text-charcoal hover:border-forest/40"
+    }`;
 
   return (
     <div>
@@ -81,14 +131,74 @@ export function MenuBrowser({
             />
           </div>
         </div>
+
+        <div className="mx-auto mt-3 flex max-w-7xl flex-wrap items-center gap-2">
+          {dietaryFilterOptions.map(({ tag, label }) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => toggleDietary(tag)}
+              aria-pressed={dietaryFilters.has(tag)}
+              className={filterChipClass(dietaryFilters.has(tag))}
+            >
+              {label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setSpicyOnly((v) => !v)}
+            aria-pressed={spicyOnly}
+            className={filterChipClass(spicyOnly)}
+          >
+            Pittig
+          </button>
+          <button
+            type="button"
+            onClick={() => setPopularOnly((v) => !v)}
+            aria-pressed={popularOnly}
+            className={filterChipClass(popularOnly)}
+          >
+            Populair
+          </button>
+          <button
+            type="button"
+            onClick={() => setFavoritesOnly((v) => !v)}
+            aria-pressed={favoritesOnly}
+            className={filterChipClass(favoritesOnly)}
+          >
+            Mijn favorieten
+          </button>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            aria-label="Sorteren"
+            className="ml-auto h-9 rounded-full border border-border bg-warm-white px-3 text-sm text-charcoal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+          >
+            <option value="aanbevolen">Aanbevolen</option>
+            <option value="prijs-op">Prijs laag-hoog</option>
+            <option value="prijs-af">Prijs hoog-laag</option>
+            <option value="populair">Populair eerst</option>
+          </select>
+        </div>
       </div>
 
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {filteredItems.length === 0 ? (
           <EmptyState
             title="Geen gerechten gevonden"
-            description="Probeer een andere zoekterm of kies een andere categorie."
+            description="Probeer een andere zoekterm, filter of categorie."
           />
+        ) : hasActiveRefinement ? (
+          <div>
+            <p className="mb-5 text-sm font-medium text-muted">
+              {filteredItems.length} gerecht{filteredItems.length === 1 ? "" : "en"} gevonden
+            </p>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredItems.map((item, i) => (
+                <FoodCard key={item.id} item={item} tiltIndex={i} />
+              ))}
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col gap-14">
             {visibleCategories.map((category) => {

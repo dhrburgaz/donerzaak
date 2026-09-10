@@ -9,6 +9,7 @@ import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/lib/toast-context";
 import { formatPrice } from "@/lib/format";
 import { allergenLabels } from "@/data/allergens";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 
 type Selections = Record<string, string[]>;
 
@@ -153,6 +154,7 @@ export function MenuItemDialog({
       >
         <div className="relative">
           <FoodImage label={item.name} item={item} className="aspect-[16/9]" />
+          <FavoriteButton itemId={item.id} itemName={item.name} className="absolute left-3 top-3 h-10 w-10" />
           <button
             ref={closeButtonRef}
             type="button"

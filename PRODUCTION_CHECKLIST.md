@@ -93,6 +93,11 @@ build-fout als een aantal van deze punten nog openstaat.
       opgeslagen
 - [ ] Contactformulier gekoppeld aan een echte e-mail/API-service
       (`components/contact/ContactForm.tsx`)
+- [ ] Feedbackformulier na bestelling gekoppeld aan een echte
+      e-mail/API-service of spreadsheet (`components/feedback/FeedbackForm.tsx`)
+      — nu wordt niets verzonden of opgeslagen. Dit is bewust een eigen
+      feedbackformulier, geen nepreview-widget; koppel het niet aan een
+      openbare reviewpagina zonder toestemming van de klant.
 - [ ] Server-side validatie en rate limiting toegevoegd zodra er een echte
       backend is (zie sectie 31 "Security" van de opdracht)
 

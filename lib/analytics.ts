@@ -16,7 +16,8 @@ export type AnalyticsEvent =
   | "route_clicked"
   | "catering_started"
   | "catering_submitted"
-  | "google_reviews_clicked";
+  | "google_reviews_clicked"
+  | "feedback_submitted";
 
 export function track(event: AnalyticsEvent, data?: Record<string, unknown>) {
   if (process.env.NODE_ENV !== "production") {

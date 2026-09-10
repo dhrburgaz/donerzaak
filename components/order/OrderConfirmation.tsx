@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
 import type { OrderPayload, OrderResult } from "@/types";
 import { StampCard } from "@/components/loyalty/StampCard";
+import { FeedbackForm } from "@/components/feedback/FeedbackForm";
 
 type StoredOrder = { payload: OrderPayload; result: OrderResult };
 
@@ -108,6 +109,10 @@ export function OrderConfirmation() {
       )}
 
       <StampCard className="mt-8 text-left" />
+
+      <div className="mt-8 rounded-2xl border border-border bg-warm-white p-5 text-left shadow-sm sm:p-6">
+        <FeedbackForm />
+      </div>
 
       <Button href="/menu" size="lg" className="mt-8">
         Terug naar het menu

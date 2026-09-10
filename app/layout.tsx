@@ -9,6 +9,7 @@ import { ToastProvider } from "@/lib/toast-context";
 import { ItemDialogProvider } from "@/lib/item-dialog-context";
 import { business } from "@/data/business";
 import { JsonLd } from "@/components/JsonLd";
+import { basePath } from "@/lib/base-path";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -36,6 +37,16 @@ export const metadata: Metadata = {
     siteName: business.shortName,
     locale: "nl_NL",
     type: "website",
+  },
+  manifest: `${basePath}/manifest.webmanifest`,
+  icons: {
+    icon: [{ url: `${basePath}/icons/icon-192.png`, sizes: "192x192", type: "image/png" }],
+    apple: [{ url: `${basePath}/icons/apple-touch-icon.png`, sizes: "180x180", type: "image/png" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: business.shortName,
   },
 };
 

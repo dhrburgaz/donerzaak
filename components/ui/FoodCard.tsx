@@ -7,6 +7,7 @@ import { Price } from "@/components/ui/Price";
 import { useItemDialog } from "@/lib/item-dialog-context";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/lib/toast-context";
+import { FavoriteButton } from "@/components/ui/FavoriteButton";
 
 const tiltClasses = ["rotate-[-1.1deg]", "rotate-[0.7deg]", "rotate-[-0.5deg]"];
 
@@ -36,18 +37,25 @@ export function FoodCard({ item, tiltIndex }: { item: MenuItem; tiltIndex?: numb
     <div
       className={`group flex flex-col overflow-hidden rounded-3xl border border-border bg-warm-white shadow-md transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:rotate-0 hover:shadow-2xl ${tilt}`}
     >
-      <button
-        type="button"
-        onClick={() => openDialog(item)}
-        className="relative block overflow-hidden text-left"
-        aria-label={`${item.name} bekijken`}
-      >
-        <FoodImage label={item.name} item={item} className="aspect-[4/3]" />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+      <div className="relative overflow-hidden">
+        <button
+          type="button"
+          onClick={() => openDialog(item)}
+          className="block text-left"
+          aria-label={`${item.name} bekijken`}
+        >
+          <FoodImage label={item.name} item={item} className="aspect-[4/3]" />
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover:translate-x-full"
+          />
+        </button>
+        <FavoriteButton
+          itemId={item.id}
+          itemName={item.name}
+          className="absolute right-3 top-3 h-9 w-9"
         />
-      </button>
+      </div>
       <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="flex flex-wrap gap-1.5">
           {item.popular && <PopularBadge />}

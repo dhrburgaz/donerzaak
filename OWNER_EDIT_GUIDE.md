@@ -145,3 +145,27 @@ Bestand: `lib/loyalty.ts` → `STAMPS_REQUIRED` (aantal stempels) en
 `REWARD_DESCRIPTION` (wat de klant krijgt). Telt nu lokaal in de browser
 mee, niet per account — zie PRODUCTION_CHECKLIST.md voor wat nodig is om
 dit als een echte klantenbeloning te gebruiken.
+
+## 13. Installeerbare app (PWA)
+
+De site is installeerbaar op telefoon/desktop ("Toevoegen aan startscherm").
+Bestanden: `app/manifest.ts` (naam, kleuren, iconen) en
+`scripts/generate-icons.mjs` (genereert de PNG-iconen in `public/icons/`
+uit het bestaande merk-icoon). Wil je een eigen logo als app-icoon
+gebruiken, pas dan de `WRAP_GLYPH`/kleuren in `scripts/generate-icons.mjs`
+aan en draai `node scripts/generate-icons.mjs` opnieuw.
+
+## 14. Catering-FAQ
+
+Bestand: `app/catering/page.tsx` → array `faqItems`. Voeg een object toe
+met `question` en `answer` om een nieuwe vraag toe te voegen; dit wordt
+automatisch getoond in het uitklapmenu én meegenomen in de FAQ-structured
+data voor Google.
+
+## 15. Feedbackformulier na bestelling
+
+Bestand: `components/feedback/FeedbackForm.tsx`, getoond op de
+bedankpagina na een demo-bestelling. Dit is een eigen, kleine feedbacktool
+(sterren + opmerking) — geen nepreviews en geen koppeling met Google
+Reviews. Nu wordt niets verzonden of opgeslagen; zie
+PRODUCTION_CHECKLIST.md om dit aan een echte inbox/sheet te koppelen.
