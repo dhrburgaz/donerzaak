@@ -4,11 +4,10 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { formatPrice } from "@/lib/format";
-import type { OrderPayload, OrderResult } from "@/types";
+import { getOrder, type StoredOrder } from "@/lib/order-history";
+import { OrderSummaryCard } from "@/components/order/OrderSummaryCard";
 import { StampCard } from "@/components/loyalty/StampCard";
 import { FeedbackForm } from "@/components/feedback/FeedbackForm";
-
-type StoredOrder = { payload: OrderPayload; result: OrderResult };
 
 export function OrderConfirmation() {
   const searchParams = useSearchParams();
@@ -20,22 +19,13 @@ export function OrderConfirmation() {
   const method = searchParams.get("method");
 
   useEffect(() => {
-    try {
-      const raw = window.sessionStorage.getItem("freshtasty-last-order");
-      if (raw) {
-        const parsed = JSON.parse(raw) as StoredOrder;
-        if (parsed.result.orderNumber === orderNumber) {
-          // One-time read of sessionStorage (an external system) on mount —
-          // not derivable during render because it must stay SSR-safe.
-          // eslint-disable-next-line react-hooks/set-state-in-effect
-          setStored(parsed);
-        }
-      }
-    } catch {
-      // ignore — fall back to URL params below.
-    } finally {
-      setChecked(true);
+    // One-time read of localStorage (an external system) on mount — not
+    // derivable during render because it must stay SSR-safe.
+    if (orderNumber) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setStored(getOrder(orderNumber));
     }
+    setChecked(true);
   }, [orderNumber]);
 
   if (!orderNumber) {
@@ -64,49 +54,30 @@ export function OrderConfirmation() {
       <p className="font-display text-2xl font-bold tracking-wide text-charcoal">{orderNumber}</p>
 
       <div className="mt-6 rounded-2xl border border-amber/40 bg-amber/10 px-5 py-4 text-sm font-medium text-[#7a5a0a]">
-        Demo: deze bestelling is niet naar het restaurant verzonden.
+        Demo-bestelling — deze bestelling is niet daadwerkelijk verzonden of betaald.
       </div>
 
       {checked && (
-        <div className="mt-8 flex flex-col gap-3 rounded-2xl border border-border bg-cream/40 p-5 text-left">
+        <div className="mt-8 rounded-2xl border border-border bg-cream/40 p-5">
           {stored ? (
-            <>
-              <ul className="flex flex-col gap-2 text-sm">
-                {stored.payload.lines.map((line) => (
-                  <li key={line.lineId} className="flex justify-between gap-3">
-                    <span className="text-charcoal/80">
-                      {line.quantity}× {line.name}
-                    </span>
-                    <span className="shrink-0 tabular-nums text-charcoal">
-                      {formatPrice(line.unitPrice * line.quantity)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <div className="flex justify-between border-t border-border pt-3 text-sm text-charcoal/80">
-                <span>Methode</span>
-                <span className="capitalize">
-                  {stored.payload.fulfillment} · {stored.payload.paymentMethod}
-                </span>
-              </div>
-              {stored.payload.discount && (
-                <div className="flex justify-between text-sm text-herb">
-                  <span>Coupon {stored.payload.discount.code}</span>
-                  <span>−{formatPrice(stored.payload.discount.discountAmount)}</span>
+            <OrderSummaryCard order={stored} />
+          ) : (
+            <div className="flex flex-col gap-3 text-left">
+              {method && <p className="text-sm capitalize text-charcoal/80">Methode: {method}</p>}
+              {total && (
+                <div className="flex justify-between font-display text-base font-bold text-forest">
+                  <span>Totaal</span>
+                  <span>{formatPrice(Number(total))}</span>
                 </div>
               )}
-            </>
-          ) : (
-            method && <p className="text-sm capitalize text-charcoal/80">Methode: {method}</p>
-          )}
-          {total && (
-            <div className="flex justify-between font-display text-base font-bold text-forest">
-              <span>Totaal</span>
-              <span>{formatPrice(Number(total))}</span>
             </div>
           )}
         </div>
       )}
+
+      <Button href={`/bestelling/order?order=${orderNumber}`} variant="outline" size="md" className="mt-4">
+        Bekijk bestelstatus
+      </Button>
 
       <StampCard className="mt-8 text-left" />
 

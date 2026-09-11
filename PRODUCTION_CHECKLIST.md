@@ -65,8 +65,23 @@ build-fout als een aantal van deze punten nog openstaat.
       `NEXT_PUBLIC_SITE_MODE=production` staat; er moet dan een werkende
       `RealOrderProvider`-implementatie zijn, bijvoorbeeld een eigen API,
       Uber Eats/externe bestel-URL, of Mollie/Stripe/iDEAL)
-- [ ] Betaalmethodes in `/checkout` kloppen met de daadwerkelijk
-      ondersteunde methodes
+- [ ] Een echte `PaymentProvider` gekoppeld (`lib/payments/` —
+      `DemoPaymentProvider` wordt net als de demo-orderprovider automatisch
+      geblokkeerd in productiemodus). Zie **MOLLIE_INTEGRATION_GUIDE.md**
+      voor de volledige stappen (server-route, webhook, environment
+      variables) — dit vereist een echte backend, wat niet mogelijk is
+      zolang de site een statische export is (GitHub Pages)
+- [ ] Betaalmethodes in `data/payment-methods.ts` kloppen met de
+      daadwerkelijk ondersteunde methodes bij de gekozen betaalprovider;
+      pas `CASH_AT_PICKUP_ENABLED` aan als "Contant bij afhalen" niet
+      gewenst is
+- [ ] `data/ordering-config.ts` (minimale bestelling voor bezorgen,
+      bezorgkosten, gratis-bezorgen-vanaf, geschatte tijden) bevat nu
+      DEMO-waarden — vervang door de echte bedrijfsregels
+- [ ] Bestelgeschiedenis (`lib/order-history.ts`, gebruikt door
+      `/bestelling/order`) staat nu in localStorage: per apparaat, niet
+      gesynchroniseerd, niet zichtbaar voor personeel. Vervang door een
+      echte database zodra er een backend is
 
 ## Coupons & loyaliteit (nu client-side demo)
 

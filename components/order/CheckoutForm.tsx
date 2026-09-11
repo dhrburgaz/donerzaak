@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { Field, SelectField, TextareaField } from "@/components/ui/Field";
@@ -8,13 +8,20 @@ import { Button } from "@/components/ui/Button";
 import { Price } from "@/components/ui/Price";
 import { formatPrice } from "@/lib/format";
 import { getOrderProvider } from "@/lib/order-provider";
-import type { AppliedCoupon, FulfillmentMethod, OrderPayload } from "@/types";
+import { getPaymentProvider } from "@/lib/payments";
+import { PaymentMethodPicker } from "@/components/order/PaymentMethodPicker";
+import { paymentMethodsFor } from "@/data/payment-methods";
+import { orderingConfig } from "@/data/ordering-config";
+import { generatePlannedSlots } from "@/lib/order-time";
+import { saveOrder } from "@/lib/order-history";
+import type { AppliedCoupon, FulfillmentMethod, OrderPayload, PaymentMethodId, TipOption } from "@/types";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { validateCoupon, markOrderPlaced } from "@/lib/coupons";
 import { incrementStamp } from "@/lib/loyalty";
+import { track } from "@/lib/analytics";
 
-const DELIVERY_FEE = 2.5;
+type TimeMode = "asap" | "plan";
 
 type FormState = {
   fulfillment: FulfillmentMethod;
@@ -26,9 +33,12 @@ type FormState = {
   postalCode: string;
   city: string;
   addressNotes: string;
-  time: string;
-  payment: "ideal" | "pin" | "contant";
+  timeMode: TimeMode;
+  plannedTime: string;
+  payment: PaymentMethodId;
   notes: string;
+  tipOption: TipOption;
+  tipCustom: string;
 };
 
 const initialState: FormState = {
@@ -41,12 +51,35 @@ const initialState: FormState = {
   postalCode: "",
   city: "Dordrecht",
   addressNotes: "",
-  time: "asap",
+  timeMode: "asap",
+  plannedTime: "",
   payment: "ideal",
   notes: "",
+  tipOption: "none",
+  tipCustom: "",
 };
 
 type Errors = Partial<Record<keyof FormState, string>>;
+
+function scrollToSection(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  el.focus({ preventScroll: true });
+}
+
+function WijzigenButton({ target }: { target: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => scrollToSection(target)}
+      className="text-xs font-semibold text-orange underline underline-offset-2 hover:text-[#d85f22]"
+    >
+      Wijzigen
+    </button>
+  );
+}
 
 export function CheckoutForm() {
   const { lines, subtotal, clearCart, hydrated } = useCart();
@@ -58,9 +91,25 @@ export function CheckoutForm() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
   const router = useRouter();
+  const reviewedRef = useRef(false);
+
+  useEffect(() => {
+    if (reviewedRef.current) return;
+    reviewedRef.current = true;
+    track("order_reviewed");
+  }, []);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function selectFulfillment(option: FulfillmentMethod) {
+    update("fulfillment", option);
+    // Pay-at-pickup methods don't apply once delivery is chosen.
+    if (option === "bezorgen" && (form.payment === "pin" || form.payment === "contant")) {
+      update("payment", "ideal");
+    }
+    track("fulfillment_selected", { fulfillment: option });
   }
 
   function validate(): Errors {
@@ -80,13 +129,44 @@ export function CheckoutForm() {
       }
       if (!form.city.trim()) next.city = "Vul je plaats in.";
     }
+    if (form.timeMode === "plan" && !form.plannedTime) {
+      next.plannedTime = "Kies een tijdstip.";
+    }
+    if (form.tipOption === "custom") {
+      const parsed = Number(form.tipCustom.replace(",", "."));
+      if (!form.tipCustom.trim() || !Number.isFinite(parsed) || parsed < 0) {
+        next.tipCustom = "Vul een geldig fooibedrag in.";
+      }
+    }
     return next;
   }
 
+  const belowFreeDelivery = subtotal < orderingConfig.freeDeliveryFrom;
   const deliveryFee =
-    form.fulfillment === "bezorgen" && appliedCoupon?.type !== "free-delivery" ? DELIVERY_FEE : 0;
+    form.fulfillment === "bezorgen" && appliedCoupon?.type !== "free-delivery" && belowFreeDelivery
+      ? orderingConfig.deliveryFee
+      : 0;
   const discountAmount = appliedCoupon && appliedCoupon.type !== "free-delivery" ? appliedCoupon.discountAmount : 0;
-  const total = Math.max(0, subtotal - discountAmount + deliveryFee);
+
+  const tipAmount = (() => {
+    if (form.tipOption === "none") return 0;
+    if (form.tipOption === "custom") {
+      const parsed = Number(form.tipCustom.replace(",", "."));
+      return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed * 100) / 100 : 0;
+    }
+    const pct = Number(form.tipOption);
+    return Math.round(subtotal * (pct / 100) * 100) / 100;
+  })();
+
+  const total = Math.max(0, subtotal - discountAmount + deliveryFee + tipAmount);
+
+  const minimumDeliveryUnmet =
+    form.fulfillment === "bezorgen" && subtotal < orderingConfig.minimumDeliveryOrder;
+
+  const estimateRange =
+    form.fulfillment === "bezorgen" ? orderingConfig.estimatedDeliveryMinutes : orderingConfig.estimatedPickupMinutes;
+
+  const plannedSlots = generatePlannedSlots();
 
   function handleApplyCoupon() {
     const result = validateCoupon(couponInput, { subtotal, fulfillment: form.fulfillment });
@@ -97,6 +177,7 @@ export function CheckoutForm() {
     }
     setAppliedCoupon(result.coupon);
     setCouponError(null);
+    track("promo_applied", { code: result.coupon.code });
   }
 
   function handleRemoveCoupon() {
@@ -105,11 +186,23 @@ export function CheckoutForm() {
     setCouponError(null);
   }
 
+  function selectTip(option: TipOption) {
+    update("tipOption", option);
+    track("tip_selected", { option });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const nextErrors = validate();
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
+
+    if (minimumDeliveryUnmet) {
+      setSubmitError(
+        `Minimale bestelling voor bezorgen is ${formatPrice(orderingConfig.minimumDeliveryOrder)}. Voeg nog iets toe of kies afhalen.`
+      );
+      return;
+    }
 
     setSubmitting(true);
     setSubmitError(null);
@@ -128,28 +221,31 @@ export function CheckoutForm() {
               notes: form.addressNotes || undefined,
             }
           : undefined,
-      requestedTime: form.time,
+      requestedTime: form.timeMode === "asap" ? "asap" : form.plannedTime,
       paymentMethod: form.payment,
       notes: form.notes || undefined,
       subtotal,
       deliveryFee,
       discount: appliedCoupon ?? undefined,
+      tip: tipAmount,
       total,
     };
 
     try {
       const result = await getOrderProvider().submitOrder(payload);
-      try {
-        window.sessionStorage.setItem(
-          "freshtasty-last-order",
-          JSON.stringify({ payload, result })
-        );
-      } catch {
-        // sessionStorage unavailable — confirmation page falls back to URL params.
-      }
+      const payment = await getPaymentProvider().createPayment({
+        amount: total,
+        method: form.payment,
+        orderNumber: result.orderNumber,
+        description: `Fresh & Tasty bestelling ${result.orderNumber}`,
+      });
+
+      saveOrder(result.orderNumber, { payload, result, payment, createdAt: new Date().toISOString() });
+
       clearCart();
       markOrderPlaced();
       const stampCount = incrementStamp();
+      track("demo_order_submitted", { orderNumber: result.orderNumber, total });
       const params = new URLSearchParams({
         order: result.orderNumber,
         total: total.toFixed(2),
@@ -159,6 +255,7 @@ export function CheckoutForm() {
       });
       router.push(`/bestelling/gelukt?${params.toString()}`);
     } catch {
+      track("checkout_error", { stage: "submit" });
       setSubmitError(
         "Er ging iets mis bij het plaatsen van de demo-bestelling. Probeer het opnieuw."
       );
@@ -182,17 +279,19 @@ export function CheckoutForm() {
     );
   }
 
+  const paymentLabel = paymentMethodsFor(form.fulfillment).find((m) => m.id === form.payment)?.label ?? form.payment;
+
   return (
-    <form onSubmit={handleSubmit} noValidate className="grid gap-10 lg:grid-cols-[1fr_360px]">
+    <form onSubmit={handleSubmit} noValidate className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_360px]">
       <div className="flex flex-col gap-10">
-        <fieldset className="flex flex-col gap-3">
+        <fieldset id="checkout-fulfillment" tabIndex={-1} className="flex min-w-0 flex-col gap-3 outline-none">
           <legend className="font-display text-lg font-bold text-forest">1. Afhalen of bezorgen</legend>
           <div className="flex gap-3">
             {(["afhalen", "bezorgen"] as const).map((option) => (
               <button
                 key={option}
                 type="button"
-                onClick={() => update("fulfillment", option)}
+                onClick={() => selectFulfillment(option)}
                 aria-pressed={form.fulfillment === option}
                 className={`flex-1 rounded-xl border px-4 py-3 text-sm font-semibold capitalize ${
                   form.fulfillment === option
@@ -204,10 +303,77 @@ export function CheckoutForm() {
               </button>
             ))}
           </div>
+          {form.fulfillment === "bezorgen" && (
+            <p className="text-xs text-muted">
+              Minimale bestelling {formatPrice(orderingConfig.minimumDeliveryOrder)} · gratis bezorgen vanaf{" "}
+              {formatPrice(orderingConfig.freeDeliveryFrom)}.
+            </p>
+          )}
         </fieldset>
 
-        <fieldset className="flex flex-col gap-4">
-          <legend className="font-display text-lg font-bold text-forest">2. Contactgegevens</legend>
+        <fieldset id="checkout-time" tabIndex={-1} className="flex min-w-0 flex-col gap-3 outline-none">
+          <legend className="font-display text-lg font-bold text-forest">2. Tijd</legend>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => update("timeMode", "asap")}
+              aria-pressed={form.timeMode === "asap"}
+              className={`flex-1 rounded-xl border px-4 py-3 text-left text-sm font-semibold ${
+                form.timeMode === "asap"
+                  ? "border-forest bg-forest text-warm-white"
+                  : "border-border bg-warm-white text-charcoal"
+              }`}
+            >
+              Zo snel mogelijk
+              <span className={`block text-xs font-normal ${form.timeMode === "asap" ? "text-warm-white/80" : "text-muted"}`}>
+                ~{estimateRange[0]}-{estimateRange[1]} min
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                update("timeMode", "plan");
+                if (!form.plannedTime && plannedSlots[0]) update("plannedTime", plannedSlots[0].value);
+              }}
+              aria-pressed={form.timeMode === "plan"}
+              disabled={plannedSlots.length === 0}
+              className={`flex-1 rounded-xl border px-4 py-3 text-left text-sm font-semibold disabled:opacity-40 ${
+                form.timeMode === "plan"
+                  ? "border-forest bg-forest text-warm-white"
+                  : "border-border bg-warm-white text-charcoal"
+              }`}
+            >
+              Tijd plannen
+            </button>
+          </div>
+          {form.timeMode === "plan" && (
+            plannedSlots.length > 0 ? (
+              <SelectField
+                label="Gewenst tijdstip"
+                name="plannedTime"
+                value={form.plannedTime}
+                onChange={(e) => {
+                  update("plannedTime", e.target.value);
+                  track("timeslot_selected", { time: e.target.value });
+                }}
+                error={errors.plannedTime}
+              >
+                {plannedSlots.map((slot) => (
+                  <option key={slot.value} value={slot.value}>
+                    {slot.label}
+                  </option>
+                ))}
+              </SelectField>
+            ) : (
+              <p className="text-xs text-muted">
+                Nu geen geplande tijden beschikbaar — kies &ldquo;Zo snel mogelijk&rdquo;.
+              </p>
+            )
+          )}
+        </fieldset>
+
+        <fieldset id="checkout-contact" tabIndex={-1} className="flex min-w-0 flex-col gap-4 outline-none">
+          <legend className="font-display text-lg font-bold text-forest">3. Klantgegevens</legend>
           <Field
             label="Naam"
             name="name"
@@ -237,9 +403,9 @@ export function CheckoutForm() {
         </fieldset>
 
         {form.fulfillment === "bezorgen" && (
-          <fieldset className="flex flex-col gap-4">
-            <legend className="font-display text-lg font-bold text-forest">3. Bezorgadres</legend>
-            <div className="grid grid-cols-[1fr_120px] gap-3">
+          <fieldset id="checkout-address" tabIndex={-1} className="flex min-w-0 flex-col gap-4 outline-none">
+            <legend className="font-display text-lg font-bold text-forest">4. Bezorgadres</legend>
+            <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-3">
               <Field
                 label="Straat"
                 name="street"
@@ -263,6 +429,9 @@ export function CheckoutForm() {
                 onChange={(e) => update("postalCode", e.target.value)}
                 error={errors.postalCode}
                 placeholder="1234 AB"
+                onBlur={() => {
+                  if (!errors.postalCode) track("address_completed");
+                }}
               />
               <Field
                 label="Plaats"
@@ -273,85 +442,46 @@ export function CheckoutForm() {
               />
             </div>
             <TextareaField
-              label="Opmerking bij adres (optioneel)"
+              label="Bezorginstructies (optioneel)"
               name="addressNotes"
               value={form.addressNotes}
               onChange={(e) => update("addressNotes", e.target.value)}
+              placeholder="Bijv. verdieping, deurcode"
             />
           </fieldset>
         )}
 
-        <fieldset className="flex flex-col gap-4">
+        <fieldset id="checkout-notes" tabIndex={-1} className="flex min-w-0 flex-col gap-3 outline-none">
           <legend className="font-display text-lg font-bold text-forest">
-            {form.fulfillment === "bezorgen" ? "4" : "3"}. Tijd
+            {form.fulfillment === "bezorgen" ? "5" : "4"}. Opmerkingen
           </legend>
-          <SelectField
-            label="Gewenst tijdstip"
-            name="time"
-            value={form.time}
-            onChange={(e) => update("time", e.target.value)}
-          >
-            <option value="asap">Zo snel mogelijk</option>
-            <option value="30min">Over 30 minuten</option>
-            <option value="1hour">Over 1 uur</option>
-          </SelectField>
-        </fieldset>
-
-        <fieldset className="flex flex-col gap-3">
-          <legend className="font-display text-lg font-bold text-forest">
-            {form.fulfillment === "bezorgen" ? "5" : "4"}. Betaalmethode
-          </legend>
-          <div className="grid grid-cols-3 gap-3">
-            {(
-              [
-                { id: "ideal", label: "iDEAL" },
-                { id: "pin", label: "Pin bij afhalen" },
-                { id: "contant", label: "Contant" },
-              ] as const
-            ).map((option) => (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => update("payment", option.id)}
-                aria-pressed={form.payment === option.id}
-                className={`rounded-xl border px-3 py-3 text-sm font-semibold ${
-                  form.payment === option.id
-                    ? "border-forest bg-forest text-warm-white"
-                    : "border-border bg-warm-white text-charcoal"
-                }`}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
+          <TextareaField
+            label="Opmerking voor de keuken (optioneel)"
+            name="notes"
+            value={form.notes}
+            onChange={(e) => update("notes", e.target.value)}
+          />
           <p className="text-xs text-muted">
-            Demo: er wordt geen echte betaling verwerkt.
+            Heb je een allergie of voedselintolerantie? Neem bij twijfel contact met ons op.
           </p>
         </fieldset>
 
-        <TextareaField
-          label="Opmerking voor de bestelling (optioneel)"
-          name="notes"
-          value={form.notes}
-          onChange={(e) => update("notes", e.target.value)}
-        />
-      </div>
+        <fieldset id="checkout-payment" tabIndex={-1} className="flex min-w-0 flex-col gap-3 outline-none">
+          <legend className="font-display text-lg font-bold text-forest">
+            {form.fulfillment === "bezorgen" ? "6" : "5"}. Betaalmethode
+          </legend>
+          <PaymentMethodPicker
+            methods={paymentMethodsFor(form.fulfillment)}
+            value={form.payment}
+            onChange={(id) => update("payment", id)}
+          />
+          <p className="text-xs text-muted">Demo: er wordt geen echte betaling verwerkt.</p>
+        </fieldset>
 
-      <aside className="flex flex-col gap-4 rounded-2xl border border-border bg-cream/40 p-5 lg:sticky lg:top-24 lg:self-start">
-        <h2 className="font-display text-lg font-bold text-forest">Besteloverzicht</h2>
-        <ul className="flex flex-col gap-2 text-sm">
-          {lines.map((line) => (
-            <li key={line.lineId} className="flex justify-between gap-3">
-              <span className="text-charcoal/80">
-                {line.quantity}× {line.name}
-              </span>
-              <span className="shrink-0 tabular-nums text-charcoal">
-                {formatPrice(line.unitPrice * line.quantity)}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <div className="flex flex-col gap-2 border-t border-border pt-3">
+        <fieldset id="checkout-coupon" tabIndex={-1} className="flex min-w-0 flex-col gap-2 outline-none">
+          <legend className="font-display text-lg font-bold text-forest">
+            {form.fulfillment === "bezorgen" ? "7" : "6"}. Kortingscode
+          </legend>
           {appliedCoupon ? (
             <div className="flex items-center justify-between gap-2 rounded-lg bg-herb/10 px-3 py-2 text-sm">
               <span className="font-medium text-forest">
@@ -372,8 +502,8 @@ export function CheckoutForm() {
                   type="text"
                   value={couponInput}
                   onChange={(e) => setCouponInput(e.target.value)}
-                  placeholder="Couponcode"
-                  className="h-10 flex-1 rounded-lg border border-border bg-warm-white px-3 text-sm uppercase placeholder:normal-case placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+                  placeholder="Heb je een kortingscode?"
+                  className="h-10 min-w-0 flex-1 rounded-lg border border-border bg-warm-white px-3 text-sm uppercase placeholder:normal-case placeholder:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
                 />
                 <button
                   type="button"
@@ -393,7 +523,98 @@ export function CheckoutForm() {
               </p>
             </div>
           )}
+        </fieldset>
+
+        <fieldset id="checkout-tip" tabIndex={-1} className="flex min-w-0 flex-col gap-3 outline-none">
+          <legend className="font-display text-lg font-bold text-forest">
+            {form.fulfillment === "bezorgen" ? "8" : "7"}. Fooi
+          </legend>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                { id: "none", label: "Geen fooi" },
+                { id: "5", label: "5%" },
+                { id: "10", label: "10%" },
+                { id: "15", label: "15%" },
+                { id: "custom", label: "Anders" },
+              ] as const
+            ).map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => selectTip(option.id)}
+                aria-pressed={form.tipOption === option.id}
+                className={`rounded-full border px-4 py-2 text-sm font-semibold ${
+                  form.tipOption === option.id
+                    ? "border-forest bg-forest text-warm-white"
+                    : "border-border bg-warm-white text-charcoal hover:border-forest/40"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          {form.tipOption === "custom" && (
+            <Field
+              label="Fooibedrag"
+              name="tipCustom"
+              inputMode="decimal"
+              value={form.tipCustom}
+              onChange={(e) => update("tipCustom", e.target.value)}
+              error={errors.tipCustom}
+              placeholder="Bijv. 2,50"
+            />
+          )}
+        </fieldset>
+
+        <div id="checkout-review" tabIndex={-1} className="flex flex-col gap-3 rounded-2xl border border-border bg-cream/40 p-5 outline-none">
+          <h2 className="font-display text-lg font-bold text-forest">
+            {form.fulfillment === "bezorgen" ? "9" : "8"}. Controleer je bestelling
+          </h2>
+          <ReviewRow label="Ontvangst" value={form.fulfillment === "bezorgen" ? "Bezorgen" : "Afhalen"} target="checkout-fulfillment" />
+          <ReviewRow
+            label="Tijd"
+            value={form.timeMode === "asap" ? "Zo snel mogelijk" : form.plannedTime || "—"}
+            target="checkout-time"
+          />
+          <ReviewRow label="Contact" value={form.name ? `${form.name} · ${form.phone}` : "—"} target="checkout-contact" />
+          {form.fulfillment === "bezorgen" && (
+            <ReviewRow
+              label="Adres"
+              value={form.street ? `${form.street} ${form.number}, ${form.postalCode} ${form.city}` : "—"}
+              target="checkout-address"
+            />
+          )}
+          <ReviewRow label="Betaalmethode" value={paymentLabel} target="checkout-payment" />
+          {appliedCoupon && (
+            <ReviewRow label="Korting" value={`${appliedCoupon.code} — ${appliedCoupon.description}`} target="checkout-coupon" />
+          )}
+          <ReviewRow
+            label="Fooi"
+            value={tipAmount > 0 ? formatPrice(tipAmount) : "Geen fooi"}
+            target="checkout-tip"
+          />
+          <div className="flex items-center justify-between border-t border-border pt-3 font-display text-base font-bold text-forest">
+            <span>Totaal</span>
+            <span>{formatPrice(total)}</span>
+          </div>
         </div>
+      </div>
+
+      <aside className="flex flex-col gap-4 rounded-2xl border border-border bg-cream/40 p-5 lg:sticky lg:top-24 lg:self-start">
+        <h2 className="font-display text-lg font-bold text-forest">Besteloverzicht</h2>
+        <ul className="flex flex-col gap-2 text-sm">
+          {lines.map((line) => (
+            <li key={line.lineId} className="flex justify-between gap-3">
+              <span className="text-charcoal/80">
+                {line.quantity}× {line.name}
+              </span>
+              <span className="shrink-0 tabular-nums text-charcoal">
+                {formatPrice(line.unitPrice * line.quantity)}
+              </span>
+            </li>
+          ))}
+        </ul>
 
         <div className="flex flex-col gap-1 border-t border-border pt-3 text-sm">
           <div className="flex justify-between text-charcoal/80">
@@ -410,28 +631,64 @@ export function CheckoutForm() {
             <span>Bezorgkosten</span>
             <span>
               {form.fulfillment === "bezorgen" ? (
-                appliedCoupon?.type === "free-delivery" ? (
+                deliveryFee === 0 ? (
                   <span className="text-herb">Gratis</span>
                 ) : (
-                  formatPrice(DELIVERY_FEE)
+                  formatPrice(orderingConfig.deliveryFee)
                 )
               ) : (
                 "—"
               )}
             </span>
           </div>
+          {tipAmount > 0 && (
+            <div className="flex justify-between text-charcoal/80">
+              <span>Fooi</span>
+              <span>{formatPrice(tipAmount)}</span>
+            </div>
+          )}
           <div className="flex justify-between pt-1 font-display text-base font-bold text-forest">
             <span>Totaal</span>
             <Price amount={total} />
           </div>
         </div>
 
+        {minimumDeliveryUnmet && (
+          <p className="text-xs font-medium text-red" role="alert">
+            Minimale bestelling voor bezorgen is {formatPrice(orderingConfig.minimumDeliveryOrder)}. Voeg nog{" "}
+            {formatPrice(orderingConfig.minimumDeliveryOrder - subtotal)} toe of kies afhalen.
+          </p>
+        )}
+
         {submitError && <ErrorState description={submitError} />}
 
-        <Button type="submit" size="lg" disabled={submitting}>
+        <div className="hidden lg:block">
+          <Button type="submit" size="lg" disabled={submitting || minimumDeliveryUnmet} className="w-full">
+            {submitting ? "Bezig met plaatsen…" : `Bestelling plaatsen · ${formatPrice(total)}`}
+          </Button>
+        </div>
+      </aside>
+
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-warm-white/95 px-4 pt-3 backdrop-blur lg:hidden"
+        style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0.75rem))" }}
+      >
+        <Button type="submit" size="lg" disabled={submitting || minimumDeliveryUnmet} className="w-full">
           {submitting ? "Bezig met plaatsen…" : `Bestelling plaatsen · ${formatPrice(total)}`}
         </Button>
-      </aside>
+      </div>
     </form>
+  );
+}
+
+function ReviewRow({ label, value, target }: { label: string; value: string; target: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <div>
+        <span className="text-muted">{label}: </span>
+        <span className="font-medium text-charcoal">{value}</span>
+      </div>
+      <WijzigenButton target={target} />
+    </div>
   );
 }

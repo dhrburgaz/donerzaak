@@ -19,7 +19,7 @@ export function BestellenView({
   const { itemCount, subtotal, hydrated } = useCart();
 
   return (
-    <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-[1fr_360px] lg:items-start lg:gap-8 lg:px-4 lg:py-10 lg:sm:px-6 lg:lg:px-8">
+    <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:gap-8 lg:px-8 lg:py-10">
       <div>
         <MenuBrowser categories={categories} items={items} />
       </div>

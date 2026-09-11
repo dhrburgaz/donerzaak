@@ -82,6 +82,18 @@ export type CartLine = {
 
 export type FulfillmentMethod = "afhalen" | "bezorgen";
 
+export type PaymentMethodId =
+  | "ideal"
+  | "creditcard"
+  | "applepay"
+  | "googlepay"
+  | "paypal"
+  | "bancontact"
+  | "pin"
+  | "contant";
+
+export type TipOption = "none" | "5" | "10" | "15" | "custom";
+
 export type CouponType = "percentage" | "fixed" | "free-delivery";
 
 export type Coupon = {
@@ -119,11 +131,12 @@ export type OrderPayload = {
     notes?: string;
   };
   requestedTime: string;
-  paymentMethod: "ideal" | "pin" | "contant";
+  paymentMethod: PaymentMethodId;
   notes?: string;
   subtotal: number;
   deliveryFee: number;
   discount?: AppliedCoupon;
+  tip: number;
   total: number;
 };
 
@@ -135,6 +148,26 @@ export type OrderResult = {
 
 export interface OrderProvider {
   submitOrder(order: OrderPayload): Promise<OrderResult>;
+}
+
+/** Input to a payment provider. Amounts are in euros (see lib/payments/README.md). */
+export type CreatePaymentInput = {
+  amount: number;
+  method: PaymentMethodId;
+  orderNumber: string;
+  description: string;
+};
+
+export type PaymentStatus = "paid" | "pending" | "failed" | "cancelled";
+
+export type PaymentResult = {
+  success: boolean;
+  status: PaymentStatus;
+  reference: string;
+};
+
+export interface PaymentProvider {
+  createPayment(input: CreatePaymentInput): Promise<PaymentResult>;
 }
 
 export type DayHours = {

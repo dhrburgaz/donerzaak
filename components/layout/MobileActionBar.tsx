@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/format";
 import { telHref } from "@/data/navigation";
+import { CartBadge } from "@/components/ui/CartBadge";
 
 export function MobileActionBar() {
   const { itemCount, subtotal } = useCart();
@@ -27,10 +28,11 @@ export function MobileActionBar() {
       </Link>
       <Link
         href="/bestellen"
-        className="flex min-h-11 flex-[1.4] flex-col items-center justify-center gap-0.5 rounded-xl bg-orange py-1.5 text-xs font-semibold text-warm-white"
+        className="relative flex min-h-11 flex-[1.4] flex-col items-center justify-center gap-0.5 rounded-xl bg-orange py-1.5 text-xs font-semibold text-warm-white"
       >
         <IconCart />
         {itemCount > 0 ? `Bestelling · ${formatPrice(subtotal)}` : "Bestellen"}
+        <CartBadge count={itemCount} />
       </Link>
       <a
         href={telHref}

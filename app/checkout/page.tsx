@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function CheckoutPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-6xl px-4 pb-28 pt-10 sm:px-6 lg:px-8 lg:pb-10">
       <p className="text-sm font-semibold uppercase tracking-wide text-orange">Afrekenen</p>
       <h1 className="mt-1 font-display text-3xl font-bold text-forest sm:text-4xl">
         Rond je bestelling af

@@ -18,9 +18,11 @@ export function Bestsellers() {
             Onze hardlopers
           </h2>
         </div>
-        <Button href="/menu" variant="ghost" className="hidden sm:inline-flex">
-          Volledig menu →
-        </Button>
+        <div className="hidden sm:block">
+          <Button href="/menu" variant="ghost">
+            Volledig menu →
+          </Button>
+        </div>
       </div>
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item, i) => (
@@ -29,9 +31,11 @@ export function Bestsellers() {
           </Reveal>
         ))}
       </div>
-      <Button href="/menu" variant="outline" className="mt-6 w-full sm:hidden">
-        Volledig menu
-      </Button>
+      <div className="mt-6 sm:hidden">
+        <Button href="/menu" variant="outline" className="w-full">
+          Volledig menu
+        </Button>
+      </div>
     </section>
   );
 }

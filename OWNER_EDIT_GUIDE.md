@@ -169,3 +169,31 @@ bedankpagina na een demo-bestelling. Dit is een eigen, kleine feedbacktool
 (sterren + opmerking) — geen nepreviews en geen koppeling met Google
 Reviews. Nu wordt niets verzonden of opgeslagen; zie
 PRODUCTION_CHECKLIST.md om dit aan een echte inbox/sheet te koppelen.
+
+## 16. Betaalmethodes
+
+Bestand: `data/payment-methods.ts`. Voeg/verwijder een object om een
+betaalmethode toe te voegen of te verbergen (id, label, korte
+uitleg, en `availableFor` — bij welke afhaal/bezorgoptie hij zichtbaar
+is). Zet `CASH_AT_PICKUP_ENABLED` op `false` om "Contant bij afhalen"
+overal te verbergen. De iconen zijn eigen, generieke pictogrammen
+(`components/ui/PaymentIcons.tsx`) — geen officiële logo's van
+iDEAL/Mastercard/etc., bewust om geen merkrechten te schenden.
+
+## 17. Bezorgkosten, minimale bestelling en geschatte tijden
+
+Bestand: `data/ordering-config.ts` — `minimumDeliveryOrder`,
+`deliveryFee`, `freeDeliveryFrom`, `estimatedPickupMinutes`,
+`estimatedDeliveryMinutes`. Dit zijn nu DEMO-waarden; pas ze aan naar de
+echte bedrijfsregels. Ze worden gebruikt in `/checkout` (bezorgkosten,
+minimumcheck) en op de bestelstatuspagina (geschatte doorlooptijd).
+
+## 18. Bestelstatus en "opnieuw bestellen"
+
+Na een demo-bestelling kan de klant via "Bekijk bestelstatus" naar
+`/bestelling/order` — een gesimuleerde voortgangsbalk
+(`components/order/OrderStatusTimeline.tsx`) op basis van verstreken tijd,
+plus "Opnieuw bestellen" (herstelt de vorige bestelling in de winkelwagen,
+en slaat niet meer beschikbare gerechten automatisch over). Bestelgeschiedenis
+staat lokaal in de browser (`lib/order-history.ts`) — zie
+PRODUCTION_CHECKLIST.md voor de beperkingen hiervan.

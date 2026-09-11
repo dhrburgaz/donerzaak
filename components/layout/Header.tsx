@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { Button } from "@/components/ui/Button";
+import { CartBadge } from "@/components/ui/CartBadge";
 import { mainNav, telHref } from "@/data/navigation";
 import { useCart } from "@/lib/cart-context";
 import { formatPrice } from "@/lib/format";
@@ -83,12 +84,18 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button href="/bestellen" size="sm" className="hidden sm:inline-flex">
-            {itemCount > 0 ? `Bestelling · ${formatPrice(subtotal)}` : "Bestel nu"}
-          </Button>
-          <Button href="/bestellen" size="sm" className="sm:hidden">
-            Bestel
-          </Button>
+          <div className="relative hidden sm:block">
+            <Button href="/bestellen" size="sm">
+              {itemCount > 0 ? `Bestelling · ${formatPrice(subtotal)}` : "Bestel nu"}
+            </Button>
+            <CartBadge count={itemCount} />
+          </div>
+          <div className="relative sm:hidden">
+            <Button href="/bestellen" size="sm">
+              Bestel
+            </Button>
+            <CartBadge count={itemCount} />
+          </div>
           <button
             type="button"
             onClick={() => setOpen(true)}
