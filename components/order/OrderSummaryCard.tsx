@@ -39,7 +39,9 @@ export function OrderSummaryCard({ order }: { order: StoredOrder }) {
           <div className="flex justify-between gap-4">
             <span>Adres</span>
             <span className="text-right">
-              {payload.address.street} {payload.address.number}, {payload.address.postalCode} {payload.address.city}
+              {payload.address.street} {payload.address.number}
+              {payload.address.addition ? `-${payload.address.addition}` : ""}, {payload.address.postalCode}{" "}
+              {payload.address.city}
             </span>
           </div>
         )}

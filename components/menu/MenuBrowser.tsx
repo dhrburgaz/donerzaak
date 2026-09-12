@@ -87,7 +87,7 @@ export function MenuBrowser({
     <div>
       <div className="sticky top-16 z-30 border-b border-border bg-warm-white/95 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 pr-4 [scrollbar-width:none] [-ms-overflow-style:none] sm:pr-6 lg:pr-8 [&::-webkit-scrollbar]:hidden">
             <button
               type="button"
               onClick={() => setActiveCategory("all")}
@@ -193,7 +193,7 @@ export function MenuBrowser({
             <p className="mb-5 text-sm font-medium text-muted">
               {filteredItems.length} gerecht{filteredItems.length === 1 ? "" : "en"} gevonden
             </p>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               {filteredItems.map((item, i) => (
                 <FoodCard key={item.id} item={item} tiltIndex={i} />
               ))}
@@ -215,7 +215,7 @@ export function MenuBrowser({
                     />
                     {category.name}
                   </h2>
-                  <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {categoryItems.map((item, i) => (
                       <FoodCard key={item.id} item={item} tiltIndex={i} />
                     ))}

@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 /**
  * A single, tasteful premium motion moment: a stylized vertical rotisserie.
  * Pure SVG + CSS (no runtime cost, no library) — a slow-turning hook/skewer
@@ -7,6 +9,9 @@
  * no extra reduced-motion handling of its own.
  */
 export function DonerSpit({ className = "" }: { className?: string }) {
+  const gradientId = `doner-cone-${useId()}`;
+  const clipId = `doner-cone-clip-${useId()}`;
+
   return (
     <svg
       viewBox="0 0 90 130"
@@ -15,11 +20,11 @@ export function DonerSpit({ className = "" }: { className?: string }) {
       role="presentation"
     >
       <defs>
-        <linearGradient id="doner-cone" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--brand-orange)" />
           <stop offset="100%" stopColor="#a4501c" />
         </linearGradient>
-        <clipPath id="doner-cone-clip">
+        <clipPath id={clipId}>
           <path d="M45 18c14 0 24 6 24 13 0 28-10 62-24 84-14-22-24-56-24-84 0-7 10-13 24-13Z" />
         </clipPath>
       </defs>
@@ -30,9 +35,9 @@ export function DonerSpit({ className = "" }: { className?: string }) {
       {/* meat cone */}
       <path
         d="M45 18c14 0 24 6 24 13 0 28-10 62-24 84-14-22-24-56-24-84 0-7 10-13 24-13Z"
-        fill="url(#doner-cone)"
+        fill={`url(#${gradientId})`}
       />
-      <g clipPath="url(#doner-cone-clip)">
+      <g clipPath={`url(#${clipId})`}>
         <path d="M20 20l20 100M32 15l20 100M44 12l20 100" stroke="#8a4416" strokeWidth="2" opacity="0.35" />
         <rect x="0" y="0" width="26" height="130" fill="var(--brand-amber)" className="doner-sheen" />
       </g>

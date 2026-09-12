@@ -1,3 +1,4 @@
+import { useId } from "react";
 import type { MenuItem } from "@/types";
 import { FoodIcon, pickIconKind, type IconKind } from "@/components/ui/FoodIcons";
 import { getCategoryGradient } from "@/lib/category-colors";
@@ -50,6 +51,7 @@ export function FoodImage({
   const resolvedIcon: IconKind = icon ?? (item ? pickIconKind(item) : pickIconKind({ name: label, categoryId: "" }));
   const [from, to] = getCategoryGradient(item?.categoryId, seed ?? label);
   const showSteam = steamyIcons.has(resolvedIcon);
+  const patternId = `ft-dots-${useId()}`;
 
   return (
     <div
@@ -59,10 +61,10 @@ export function FoodImage({
       aria-label={label}
     >
       <svg className="absolute inset-0 h-full w-full opacity-[0.12]" aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <pattern id={`ft-dots-${resolvedIcon}`} width="9" height="9" patternUnits="userSpaceOnUse">
+        <pattern id={patternId} width="9" height="9" patternUnits="userSpaceOnUse">
           <circle cx="1.6" cy="1.6" r="1.3" fill="white" />
         </pattern>
-        <rect width="100" height="100" fill={`url(#ft-dots-${resolvedIcon})`} />
+        <rect width="100" height="100" fill={`url(#${patternId})`} />
       </svg>
 
       <div className="absolute inset-0 bg-gradient-to-t from-charcoal/35 via-transparent to-white/5" aria-hidden="true" />

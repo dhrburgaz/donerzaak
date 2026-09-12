@@ -25,11 +25,13 @@ type TimeMode = "asap" | "plan";
 
 type FormState = {
   fulfillment: FulfillmentMethod;
-  name: string;
+  firstName: string;
+  lastName: string;
   phone: string;
   email: string;
   street: string;
   number: string;
+  addition: string;
   postalCode: string;
   city: string;
   addressNotes: string;
@@ -43,11 +45,13 @@ type FormState = {
 
 const initialState: FormState = {
   fulfillment: "afhalen",
-  name: "",
+  firstName: "",
+  lastName: "",
   phone: "",
   email: "",
   street: "",
   number: "",
+  addition: "",
   postalCode: "",
   city: "Dordrecht",
   addressNotes: "",
@@ -114,7 +118,8 @@ export function CheckoutForm() {
 
   function validate(): Errors {
     const next: Errors = {};
-    if (form.name.trim().length < 2) next.name = "Vul je naam in.";
+    if (form.firstName.trim().length < 2) next.firstName = "Vul je voornaam in.";
+    if (form.lastName.trim().length < 2) next.lastName = "Vul je achternaam in.";
     if (!/^[\d+()\-\s]{8,}$/.test(form.phone.trim())) {
       next.phone = "Vul een geldig telefoonnummer in.";
     }
@@ -195,7 +200,14 @@ export function CheckoutForm() {
     e.preventDefault();
     const nextErrors = validate();
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    const errorKeys = Object.keys(nextErrors);
+    if (errorKeys.length > 0) {
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const firstInvalid = document.getElementById(errorKeys[0]);
+      firstInvalid?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+      firstInvalid?.focus();
+      return;
+    }
 
     if (minimumDeliveryUnmet) {
       setSubmitError(
@@ -210,12 +222,17 @@ export function CheckoutForm() {
     const payload: OrderPayload = {
       lines,
       fulfillment: form.fulfillment,
-      contact: { name: form.name, phone: form.phone, email: form.email || undefined },
+      contact: {
+        name: `${form.firstName} ${form.lastName}`.trim(),
+        phone: form.phone,
+        email: form.email || undefined,
+      },
       address:
         form.fulfillment === "bezorgen"
           ? {
               street: form.street,
               number: form.number,
+              addition: form.addition || undefined,
               postalCode: form.postalCode,
               city: form.city,
               notes: form.addressNotes || undefined,
@@ -280,10 +297,35 @@ export function CheckoutForm() {
   }
 
   const paymentLabel = paymentMethodsFor(form.fulfillment).find((m) => m.id === form.payment)?.label ?? form.payment;
+  const errorEntries = Object.entries(errors) as [keyof FormState, string][];
 
   return (
     <form onSubmit={handleSubmit} noValidate className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_360px]">
       <div className="flex flex-col gap-10">
+        {errorEntries.length > 1 && (
+          <div role="alert" className="rounded-2xl border border-red/30 bg-red/5 p-4">
+            <p className="font-semibold text-red">Controleer de volgende velden:</p>
+            <ul className="mt-2 flex flex-col gap-1">
+              {errorEntries.map(([key, message]) => (
+                <li key={key}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(key);
+                      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                      el?.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+                      el?.focus();
+                    }}
+                    className="text-sm text-red underline underline-offset-2 hover:text-[#a53b26]"
+                  >
+                    {message}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <fieldset id="checkout-fulfillment" tabIndex={-1} className="flex min-w-0 flex-col gap-3 outline-none">
           <legend className="font-display text-lg font-bold text-forest">1. Afhalen of bezorgen</legend>
           <div className="flex gap-3">
@@ -374,14 +416,24 @@ export function CheckoutForm() {
 
         <fieldset id="checkout-contact" tabIndex={-1} className="flex min-w-0 flex-col gap-4 outline-none">
           <legend className="font-display text-lg font-bold text-forest">3. Klantgegevens</legend>
-          <Field
-            label="Naam"
-            name="name"
-            value={form.name}
-            onChange={(e) => update("name", e.target.value)}
-            error={errors.name}
-            autoComplete="name"
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label="Voornaam"
+              name="firstName"
+              value={form.firstName}
+              onChange={(e) => update("firstName", e.target.value)}
+              error={errors.firstName}
+              autoComplete="given-name"
+            />
+            <Field
+              label="Achternaam"
+              name="lastName"
+              value={form.lastName}
+              onChange={(e) => update("lastName", e.target.value)}
+              error={errors.lastName}
+              autoComplete="family-name"
+            />
+          </div>
           <Field
             label="Telefoonnummer"
             name="phone"
@@ -405,13 +457,14 @@ export function CheckoutForm() {
         {form.fulfillment === "bezorgen" && (
           <fieldset id="checkout-address" tabIndex={-1} className="flex min-w-0 flex-col gap-4 outline-none">
             <legend className="font-display text-lg font-bold text-forest">4. Bezorgadres</legend>
-            <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-3">
+            <div className="grid grid-cols-[minmax(0,1fr)_84px_84px] gap-3">
               <Field
                 label="Straat"
                 name="street"
                 value={form.street}
                 onChange={(e) => update("street", e.target.value)}
                 error={errors.street}
+                autoComplete="address-line1"
               />
               <Field
                 label="Huisnummer"
@@ -419,6 +472,13 @@ export function CheckoutForm() {
                 value={form.number}
                 onChange={(e) => update("number", e.target.value)}
                 error={errors.number}
+              />
+              <Field
+                label="Toevoeging"
+                name="addition"
+                value={form.addition}
+                onChange={(e) => update("addition", e.target.value)}
+                autoComplete="address-line2"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -429,6 +489,7 @@ export function CheckoutForm() {
                 onChange={(e) => update("postalCode", e.target.value)}
                 error={errors.postalCode}
                 placeholder="1234 AB"
+                autoComplete="postal-code"
                 onBlur={() => {
                   if (!errors.postalCode) track("address_completed");
                 }}
@@ -439,6 +500,7 @@ export function CheckoutForm() {
                 value={form.city}
                 onChange={(e) => update("city", e.target.value)}
                 error={errors.city}
+                autoComplete="address-level2"
               />
             </div>
             <TextareaField
@@ -577,11 +639,19 @@ export function CheckoutForm() {
             value={form.timeMode === "asap" ? "Zo snel mogelijk" : form.plannedTime || "—"}
             target="checkout-time"
           />
-          <ReviewRow label="Contact" value={form.name ? `${form.name} · ${form.phone}` : "—"} target="checkout-contact" />
+          <ReviewRow
+            label="Contact"
+            value={form.firstName ? `${form.firstName} ${form.lastName} · ${form.phone}` : "—"}
+            target="checkout-contact"
+          />
           {form.fulfillment === "bezorgen" && (
             <ReviewRow
               label="Adres"
-              value={form.street ? `${form.street} ${form.number}, ${form.postalCode} ${form.city}` : "—"}
+              value={
+                form.street
+                  ? `${form.street} ${form.number}${form.addition ? `-${form.addition}` : ""}, ${form.postalCode} ${form.city}`
+                  : "—"
+              }
               target="checkout-address"
             />
           )}
@@ -602,7 +672,12 @@ export function CheckoutForm() {
       </div>
 
       <aside className="flex flex-col gap-4 rounded-2xl border border-border bg-cream/40 p-5 lg:sticky lg:top-24 lg:self-start">
-        <h2 className="font-display text-lg font-bold text-forest">Besteloverzicht</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-display text-lg font-bold text-forest">Besteloverzicht</h2>
+          <span className="rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest">
+            {form.fulfillment === "bezorgen" ? "Bezorgen" : "Afhalen"}
+          </span>
+        </div>
         <ul className="flex flex-col gap-2 text-sm">
           {lines.map((line) => (
             <li key={line.lineId} className="flex justify-between gap-3">

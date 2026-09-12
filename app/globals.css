@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/**
+ * Explicit z-index scale — avoid arbitrary values or stacking-context
+ * patches outside this ladder. Higher tiers should always be able to
+ * cover lower ones, regardless of DOM order:
+ *   z-30  in-page sticky bars (menu category nav)
+ *   z-40  app chrome (site header, bottom action bar, sticky page CTAs)
+ *   z-50  mobile navigation drawer
+ *   z-[55] cart drawer
+ *   z-[58] product/modifier modal
+ *   z-[60] toast notices (must sit above every overlay)
+ */
+
 :root {
   /* Brand palette — food psychology + existing green logo identity */
   --brand-forest: #173f32;

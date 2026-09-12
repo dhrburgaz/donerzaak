@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
@@ -57,8 +58,9 @@ export function Header() {
   }, [open]);
 
   return (
+    <>
     <header
-      className={`sticky top-0 z-50 transition-colors duration-200 ${
+      className={`sticky top-0 z-40 transition-colors duration-200 ${
         scrolled ? "bg-warm-white/95 shadow-sm backdrop-blur" : "bg-warm-white/80 backdrop-blur-sm"
       }`}
     >
@@ -111,7 +113,9 @@ export function Header() {
         </div>
       </div>
 
-      {open && (
+    </header>
+    {open &&
+      createPortal(
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
             className="absolute inset-0 bg-charcoal/40"
@@ -124,7 +128,7 @@ export function Header() {
             role="dialog"
             aria-modal="true"
             aria-label="Mobiele navigatie"
-            className="absolute right-0 top-0 flex h-full w-full max-w-sm flex-col gap-6 bg-warm-white px-6 py-6 shadow-xl"
+            className="absolute right-0 top-0 flex h-dvh w-full max-w-sm flex-col gap-6 bg-warm-white px-6 py-6 shadow-xl"
           >
             <div className="flex items-center justify-between">
               <Logo />
@@ -152,7 +156,7 @@ export function Header() {
                 </Link>
               ))}
             </nav>
-            <div className="mt-auto flex flex-col gap-3">
+            <div className="mt-auto flex flex-col gap-3" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
               <Button href="/bestellen" size="lg">
                 Bestel nu
               </Button>
@@ -161,8 +165,9 @@ export function Header() {
               </Button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </header>
+    </>
   );
 }

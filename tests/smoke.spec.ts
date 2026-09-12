@@ -11,6 +11,33 @@ test.describe("Smoke", () => {
     expect(errors).toEqual([]);
   });
 
+  test("mobile nav opens as a solid overlay with no bleed-through and closes correctly", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "Open menu" }).click();
+
+    const nav = page.locator("#mobile-nav");
+    await expect(nav).toBeVisible();
+
+    // The panel must be the actual top hit target, not the homepage
+    // hero underneath it (regression check for the header/backdrop-filter
+    // stacking-context bug where nav text bled through the hero).
+    const hit = await page.evaluate(() => {
+      const el = document.elementFromPoint(50, 400);
+      return el?.closest("#mobile-nav") ? "mobile-nav" : el?.tagName;
+    });
+    expect(hit).toBe("mobile-nav");
+
+    await expect(nav.getByRole("link", { name: "Menu" })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(nav).not.toBeVisible();
+
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await nav.getByRole("link", { name: "Menu" }).click();
+    await expect(page).toHaveURL(/\/menu\/?$/);
+    await expect(nav).not.toBeVisible();
+  });
+
   test("menu route loads and shows items", async ({ page }) => {
     await page.goto("/menu");
     await expect(page.getByRole("heading", { name: "Ons volledige menu" })).toBeVisible();
@@ -50,7 +77,8 @@ test.describe("Smoke", () => {
     await page.waitForTimeout(300);
 
     await page.goto("/checkout");
-    await page.locator("#name").fill("Test Klant");
+    await page.locator("#firstName").fill("Test");
+    await page.locator("#lastName").fill("Klant");
     await page.locator("#phone").fill("0612345678");
     await page.getByRole("button", { name: /Bestelling plaatsen/ }).click();
     await expect(page).toHaveURL(/\/bestelling\/gelukt/);
@@ -108,7 +136,8 @@ test.describe("Smoke", () => {
     await page.locator('[role="dialog"] button:has-text("Toevoegen")').click();
     await page.waitForTimeout(300);
     await page.goto("/checkout");
-    await page.locator("#name").fill("Test Klant");
+    await page.locator("#firstName").fill("Test");
+    await page.locator("#lastName").fill("Klant");
     await page.locator("#phone").fill("0612345678");
     await page.getByRole("button", { name: /Bestelling plaatsen/ }).click();
     await expect(page).toHaveURL(/\/bestelling\/gelukt/);

@@ -35,7 +35,8 @@ export function BestellenView({
         <button
           type="button"
           onClick={() => setDrawerOpen(true)}
-          className="fixed inset-x-4 bottom-20 z-40 flex h-13 items-center justify-between rounded-full bg-forest px-5 text-warm-white shadow-lg lg:hidden"
+          style={{ bottom: "calc(5rem + env(safe-area-inset-bottom, 0px))" }}
+          className="fixed inset-x-4 z-40 flex h-13 items-center justify-between rounded-full bg-forest px-5 text-warm-white shadow-lg lg:hidden"
         >
           <span className="font-semibold">Bekijk bestelling</span>
           <span className="font-display font-bold">{formatPrice(subtotal)}</span>

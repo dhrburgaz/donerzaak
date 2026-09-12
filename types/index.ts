@@ -126,6 +126,7 @@ export type OrderPayload = {
   address?: {
     street: string;
     number: string;
+    addition?: string;
     postalCode: string;
     city: string;
     notes?: string;
