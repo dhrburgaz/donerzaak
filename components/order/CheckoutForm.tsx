@@ -113,10 +113,17 @@ export function CheckoutForm() {
   }
 
   function selectFulfillment(option: FulfillmentMethod) {
+    const wasBezorgen = form.fulfillment === "bezorgen";
     update("fulfillment", option);
     // Pay-at-pickup methods don't apply once delivery is chosen.
     if (option === "bezorgen" && (form.payment === "pin" || form.payment === "contant")) {
       update("payment", "ideal");
+    }
+    if (option === "bezorgen" && !wasBezorgen) {
+      // The address fieldset only mounts once "bezorgen" is chosen, further
+      // down the page — scroll it into view so it's unmistakable that it
+      // appeared, instead of relying on the customer noticing on their own.
+      window.setTimeout(() => scrollToSection("checkout-address"), 60);
     }
     track("fulfillment_selected", { fulfillment: option });
   }
@@ -177,6 +184,21 @@ export function CheckoutForm() {
     form.fulfillment === "bezorgen" ? orderingConfig.estimatedDeliveryMinutes : orderingConfig.estimatedPickupMinutes;
 
   const plannedSlots = generatePlannedSlots();
+
+  // Keyless route preview: Google's dir/?api=1 deep link geocodes both
+  // addresses as plain text on the visitor's own device, so no API key,
+  // account, or (unverified) coordinates are needed on our side.
+  const mapsDirectionsUrl = (() => {
+    const origin = `${business.address.street} ${business.address.number}, ${business.address.postalCode} ${business.address.city}`;
+    const destination = `${form.street} ${form.number}, ${form.postalCode} ${form.city}`;
+    const params = new URLSearchParams({
+      api: "1",
+      origin,
+      destination,
+      travelmode: "driving",
+    });
+    return `https://www.google.com/maps/dir/?${params.toString()}`;
+  })();
 
   function handleApplyCoupon() {
     const result = validateCoupon(couponInput, { subtotal, fulfillment: form.fulfillment });
@@ -529,6 +551,19 @@ export function CheckoutForm() {
                 autoComplete="address-level2"
               />
             </div>
+            {form.street.trim() && form.number.trim() && form.postalCode.trim() && form.city.trim() && (
+              <a
+                href={mapsDirectionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-warm-white px-3 py-1.5 text-xs font-semibold text-forest hover:border-forest/40"
+              >
+                <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+                  <path d="M10 2a6 6 0 0 0-6 6c0 4.5 6 10 6 10s6-5.5 6-10a6 6 0 0 0-6-6Zm0 8.5A2.5 2.5 0 1 1 10 5a2.5 2.5 0 0 1 0 5.5Z" />
+                </svg>
+                Bekijk route vanaf de zaak naar jouw adres
+              </a>
+            )}
             <TextareaField
               label="Bezorginstructies (optioneel)"
               name="addressNotes"
