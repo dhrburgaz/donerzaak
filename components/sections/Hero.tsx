@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/Button";
 import { FoodImage } from "@/components/ui/FoodImage";
 import { OpeningStatus } from "@/components/ui/OpeningStatus";
 import { FoodIcon } from "@/components/ui/FoodIcons";
+import { IngredientIcon } from "@/components/ui/IngredientIcons";
 import { SectionWave } from "@/components/ui/SectionWave";
 import { PopularBadge } from "@/components/ui/DietaryBadge";
 
@@ -17,6 +18,20 @@ export function Hero() {
       <div
         className="pointer-events-none absolute -right-16 top-1/3 h-80 w-80 rounded-full bg-amber/25 blur-3xl"
         aria-hidden="true"
+      />
+
+      {/* Scattered ingredient accents — decorative only, sparse and subtle */}
+      <IngredientIcon
+        kind="lettuce"
+        className="pointer-events-none absolute left-[6%] top-[8%] hidden h-10 w-10 -rotate-12 opacity-80 sm:block lg:h-12 lg:w-12"
+      />
+      <IngredientIcon
+        kind="pepper"
+        className="pointer-events-none absolute left-[2%] top-[62%] hidden h-9 w-9 rotate-[18deg] opacity-75 lg:block"
+      />
+      <IngredientIcon
+        kind="sauce"
+        className="pointer-events-none absolute right-[3%] top-[10%] h-8 w-8 rotate-[-10deg] opacity-70 sm:h-10 sm:w-10"
       />
 
       <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-12 lg:py-20 lg:px-8">
@@ -102,6 +117,16 @@ export function Hero() {
           <div className="absolute -right-3 -top-3 rotate-6 sm:-right-4 sm:-top-4">
             <PopularBadge />
           </div>
+
+          {/* Ingredients "spilling" over the photo edges for depth */}
+          <IngredientIcon
+            kind="tomato"
+            className="pointer-events-none absolute -bottom-3 -right-3 h-14 w-14 rotate-[8deg] drop-shadow-lg sm:h-16 sm:w-16"
+          />
+          <IngredientIcon
+            kind="garlic"
+            className="pointer-events-none absolute -bottom-2 left-[38%] hidden h-10 w-10 -rotate-6 drop-shadow-md sm:block"
+          />
         </div>
       </div>
 
