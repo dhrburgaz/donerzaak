@@ -78,6 +78,13 @@ build-fout als een aantal van deze punten nog openstaat.
 - [ ] `data/ordering-config.ts` (minimale bestelling voor bezorgen,
       bezorgkosten, gratis-bezorgen-vanaf, geschatte tijden) bevat nu
       DEMO-waarden — vervang door de echte bedrijfsregels
+- [ ] **Bezorggebied.** Er is geen postcode-/straal-check: iedereen kan
+      "Bezorgen" kiezen, ongeacht adres. Zolang er geen bevestigd
+      bezorggebied is, toont de checkout bewust een neutrale oproep om te
+      bellen bij twijfel (`components/order/CheckoutForm.tsx`, stap
+      "Bezorgadres") in plaats van een verzonnen postcode-lijst. Vervang dit
+      door een echte controle (postcodelijst of straal in km) zodra de
+      eigenaar het bezorggebied heeft vastgesteld.
 - [ ] Bestelgeschiedenis (`lib/order-history.ts`, gebruikt door
       `/bestelling/order`) staat nu in localStorage: per apparaat, niet
       gesynchroniseerd, niet zichtbaar voor personeel. Vervang door een

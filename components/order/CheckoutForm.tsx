@@ -20,6 +20,9 @@ import { ErrorState } from "@/components/ui/ErrorState";
 import { validateCoupon, markOrderPlaced } from "@/lib/coupons";
 import { incrementStamp } from "@/lib/loyalty";
 import { track } from "@/lib/analytics";
+import { findUnavailableLines } from "@/lib/cart-availability";
+import { business } from "@/data/business";
+import { telHref } from "@/data/navigation";
 
 type TimeMode = "asap" | "plan";
 
@@ -86,7 +89,9 @@ function WijzigenButton({ target }: { target: string }) {
 }
 
 export function CheckoutForm() {
-  const { lines, subtotal, clearCart, hydrated } = useCart();
+  const { lines, subtotal, clearCart, removeLine, hydrated } = useCart();
+  const unavailable = findUnavailableLines(lines);
+  const unavailableIds = new Set(unavailable.map((u) => u.line.lineId));
   const [form, setForm] = useState<FormState>(initialState);
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -198,6 +203,19 @@ export function CheckoutForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // Defense in depth against a double dispatch (e.g. a rapid double
+    // click/tap racing ahead of the disabled-button re-render).
+    if (submitting) return;
+
+    if (lines.length === 0) return;
+
+    if (unavailable.length > 0) {
+      setSubmitError(
+        "Eén of meer producten in je bestelling zijn niet meer beschikbaar. Verwijder ze om verder te kunnen afrekenen."
+      );
+      return;
+    }
+
     const nextErrors = validate();
     setErrors(nextErrors);
     const errorKeys = Object.keys(nextErrors);
@@ -457,6 +475,14 @@ export function CheckoutForm() {
         {form.fulfillment === "bezorgen" && (
           <fieldset id="checkout-address" tabIndex={-1} className="flex min-w-0 flex-col gap-4 outline-none">
             <legend className="font-display text-lg font-bold text-forest">4. Bezorgadres</legend>
+            <p className="text-xs text-muted">
+              Ons bezorggebied is nog niet exact vastgelegd. Twijfel je of jouw adres binnen bereik
+              valt? Bel ons even op{" "}
+              <a href={telHref} className="font-medium text-forest underline underline-offset-2">
+                {business.phoneDisplay}
+              </a>{" "}
+              voordat je afrekent.
+            </p>
             <div className="grid grid-cols-[minmax(0,1fr)_84px_84px] gap-3">
               <Field
                 label="Straat"
@@ -671,27 +697,52 @@ export function CheckoutForm() {
         </div>
       </div>
 
-      <aside className="flex flex-col gap-4 rounded-2xl border border-border bg-cream/40 p-5 lg:sticky lg:top-24 lg:self-start">
-        <div className="flex items-center justify-between gap-2">
+      <aside className="flex flex-col gap-4 rounded-2xl border border-border bg-cream/40 p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:self-start">
+        <div className="flex shrink-0 items-center justify-between gap-2">
           <h2 className="font-display text-lg font-bold text-forest">Besteloverzicht</h2>
           <span className="rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest">
             {form.fulfillment === "bezorgen" ? "Bezorgen" : "Afhalen"}
           </span>
         </div>
-        <ul className="flex flex-col gap-2 text-sm">
-          {lines.map((line) => (
-            <li key={line.lineId} className="flex justify-between gap-3">
-              <span className="text-charcoal/80">
-                {line.quantity}× {line.name}
-              </span>
-              <span className="shrink-0 tabular-nums text-charcoal">
-                {formatPrice(line.unitPrice * line.quantity)}
-              </span>
-            </li>
-          ))}
-        </ul>
+        {/* Scrollable so a long order can't push the total/submit button
+            below the fold on desktop — those stay pinned below. */}
+        <div className="min-h-0 flex-1 overflow-y-auto lg:min-h-[2.5rem]">
+          {unavailable.length > 0 && (
+            <div role="alert" className="mb-3 rounded-xl border border-red/30 bg-red/5 p-3 text-sm">
+              <p className="font-semibold text-red">
+                {unavailable.length === 1
+                  ? "Eén product is niet meer beschikbaar."
+                  : `${unavailable.length} producten zijn niet meer beschikbaar.`}
+              </p>
+              <button
+                type="button"
+                onClick={() => unavailable.forEach((u) => removeLine(u.line.lineId))}
+                className="mt-1 text-xs font-semibold text-red underline underline-offset-2 hover:text-[#a53b26]"
+              >
+                Verwijder deze items
+              </button>
+            </div>
+          )}
+          <ul className="flex flex-col gap-2 text-sm">
+            {lines.map((line) => (
+              <li key={line.lineId} className="flex justify-between gap-3">
+                <span className="text-charcoal/80">
+                  {line.quantity}× {line.name}
+                  {unavailableIds.has(line.lineId) && (
+                    <span className="ml-1.5 rounded-full bg-red/10 px-2 py-0.5 text-xs font-semibold text-red">
+                      Niet beschikbaar
+                    </span>
+                  )}
+                </span>
+                <span className="shrink-0 tabular-nums text-charcoal">
+                  {formatPrice(line.unitPrice * line.quantity)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        <div className="flex flex-col gap-1 border-t border-border pt-3 text-sm">
+        <div className="flex shrink-0 flex-col gap-1 border-t border-border pt-3 text-sm">
           <div className="flex justify-between text-charcoal/80">
             <span>Subtotaal</span>
             <span>{formatPrice(subtotal)}</span>
@@ -729,16 +780,20 @@ export function CheckoutForm() {
         </div>
 
         {minimumDeliveryUnmet && (
-          <p className="text-xs font-medium text-red" role="alert">
+          <p className="shrink-0 text-xs font-medium text-red" role="alert">
             Minimale bestelling voor bezorgen is {formatPrice(orderingConfig.minimumDeliveryOrder)}. Voeg nog{" "}
             {formatPrice(orderingConfig.minimumDeliveryOrder - subtotal)} toe of kies afhalen.
           </p>
         )}
 
-        {submitError && <ErrorState description={submitError} />}
+        {submitError && (
+          <div className="shrink-0">
+            <ErrorState description={submitError} />
+          </div>
+        )}
 
-        <div className="hidden lg:block">
-          <Button type="submit" size="lg" disabled={submitting || minimumDeliveryUnmet} className="w-full">
+        <div className="hidden shrink-0 lg:block">
+          <Button type="submit" size="lg" disabled={submitting || minimumDeliveryUnmet || unavailable.length > 0} className="w-full">
             {submitting ? "Bezig met plaatsen…" : `Bestelling plaatsen · ${formatPrice(total)}`}
           </Button>
         </div>
@@ -748,7 +803,7 @@ export function CheckoutForm() {
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-warm-white/95 px-4 pt-3 backdrop-blur lg:hidden"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom, 0.75rem))" }}
       >
-        <Button type="submit" size="lg" disabled={submitting || minimumDeliveryUnmet} className="w-full">
+        <Button type="submit" size="lg" disabled={submitting || minimumDeliveryUnmet || unavailable.length > 0} className="w-full">
           {submitting ? "Bezig met plaatsen…" : `Bestelling plaatsen · ${formatPrice(total)}`}
         </Button>
       </div>

@@ -4,8 +4,9 @@ import { BestellenView } from "@/components/order/BestellenView";
 import { DonerSpit } from "@/components/ui/DonerSpit";
 
 export const metadata: Metadata = {
-  title: "Bestellen",
-  description: "Stel je bestelling samen bij Fresh & Tasty Dordrecht en reken eenvoudig af.",
+  title: "Online bestellen",
+  description:
+    "Döner, shoarma of kapsalon bestellen in Dordrecht? Stel je bestelling online samen bij Fresh & Tasty en reken eenvoudig af voor afhalen of bezorgen.",
   alternates: { canonical: "/bestellen" },
 };
 

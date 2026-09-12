@@ -23,9 +23,9 @@ export function BestellenView({
         <MenuBrowser categories={categories} items={items} />
       </div>
 
-      <aside className="sticky top-24 hidden rounded-2xl border border-border bg-warm-white p-5 shadow-sm lg:block">
-        <h2 className="font-display text-lg font-bold text-forest">Jouw bestelling</h2>
-        <div className="mt-4">
+      <aside className="sticky top-24 hidden max-h-[calc(100vh-7rem)] rounded-2xl border border-border bg-warm-white p-5 shadow-sm lg:flex lg:flex-col">
+        <h2 className="shrink-0 font-display text-lg font-bold text-forest">Jouw bestelling</h2>
+        <div className="mt-4 flex min-h-0 flex-1 flex-col">
           <CartSummary />
         </div>
       </aside>

@@ -61,7 +61,7 @@ export function CartDrawer({ onClose }: { onClose: () => void }) {
             </svg>
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">
+        <div className="flex min-h-0 flex-1 flex-col px-5 py-4">
           <CartSummary />
         </div>
       </div>

@@ -210,4 +210,54 @@ test.describe("Smoke", () => {
     expect(response?.status()).toBe(404);
     await expect(page.getByRole("heading", { name: /pagina bestaat niet/i })).toBeVisible();
   });
+
+  test("desktop: 'Naar afrekenen' stays reachable without scrolling once the order has several lines", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
+    await page.goto("/bestellen");
+
+    for (let i = 0; i < 3; i++) {
+      await page.getByRole("button", { name: "Toevoegen" }).nth(i).click();
+      const dialog = page.locator('[role="dialog"]');
+      if (await dialog.count()) {
+        await dialog.locator('button:has-text("Toevoegen")').click();
+      }
+      await page.waitForTimeout(200);
+    }
+
+    await page.evaluate(() => window.scrollTo(0, 1400));
+    const checkoutBtn = page.getByRole("link", { name: /Naar afrekenen/ }).first();
+    await expect(checkoutBtn).toBeInViewport();
+  });
+
+  test("checkout: a stale/removed cart item is flagged and blocks submission until removed", async ({ page }) => {
+    await page.goto("/bestellen");
+    await page.evaluate(() => {
+      const stale = {
+        version: 1,
+        lines: [
+          {
+            lineId: "stale-1",
+            itemId: "does-not-exist-anymore",
+            name: "Verouderd testproduct",
+            unitPrice: 9.5,
+            quantity: 1,
+            selections: [],
+          },
+        ],
+      };
+      window.localStorage.setItem("freshtasty-cart", JSON.stringify(stale));
+    });
+    await page.reload();
+
+    await expect(page.getByText(/niet meer beschikbaar/)).toBeVisible();
+    const checkoutLink = page.getByRole("link", { name: /Naar afrekenen/ }).first();
+    // A disabled CTA is rendered as a plain button (no href) in this state.
+    await expect(checkoutLink).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /Naar afrekenen/ }).first()).toBeDisabled();
+
+    await page.getByRole("button", { name: "Alle niet-beschikbare items verwijderen" }).click();
+    await expect(page.getByText("Je bestelling is nog leeg")).toBeVisible();
+  });
 });
