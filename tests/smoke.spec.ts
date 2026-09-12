@@ -44,6 +44,51 @@ test.describe("Smoke", () => {
     await expect(page.getByText("Kapsalon Kipdöner").first()).toBeVisible();
   });
 
+  test("mobile bottom nav: Bestelling opens the real cart drawer from any page", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    // Add an item, then leave /bestellen entirely.
+    await page.goto("/bestellen");
+    await page.getByRole("button", { name: "Toevoegen" }).first().click();
+    await page.locator('[role="dialog"] button:has-text("Toevoegen")').click();
+    await page.waitForTimeout(300);
+    await page.goto("/");
+
+    const cartTrigger = page.locator('nav[aria-label="Snelle acties"] button', { hasText: /Bestelling/ });
+    await expect(cartTrigger).toBeVisible();
+    const urlBefore = page.url();
+    await cartTrigger.click();
+
+    const drawer = page.locator('[role="dialog"][aria-label="Jouw bestelling"]');
+    await expect(drawer).toBeVisible();
+    expect(page.url()).toBe(urlBefore); // opened a drawer, did not navigate away
+    await expect(drawer.getByText("Kapsalon Kipdöner")).toBeVisible();
+    await expect(drawer.getByText("Subtotaal")).toBeVisible();
+
+    await page.keyboard.press("Escape");
+    await expect(drawer).not.toBeVisible();
+
+    // Menu tab shows an active state only while actually on /menu.
+    const menuLink = page.locator('nav[aria-label="Snelle acties"] a', { hasText: "Menu" });
+    expect(await menuLink.getAttribute("aria-current")).toBeNull();
+    await page.goto("/menu");
+    expect(await menuLink.getAttribute("aria-current")).toBe("page");
+
+    // Bellen keeps a real tel: link on the full button.
+    const belButton = page.locator('nav[aria-label="Snelle acties"] a[href^="tel:"]');
+    await expect(belButton).toBeVisible();
+    expect(await belButton.getAttribute("href")).toMatch(/^tel:\+?\d+$/);
+  });
+
+  test("mobile bottom nav: empty cart keeps Bestellen as a plain link to /bestellen", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+    const bestellenLink = page.locator('nav[aria-label="Snelle acties"] a[href="/bestellen/"]');
+    await expect(bestellenLink).toBeVisible();
+    await bestellenLink.click();
+    await expect(page).toHaveURL(/\/bestellen\/?$/);
+  });
+
   test("bestellen route loads", async ({ page }) => {
     await page.goto("/bestellen");
     await expect(page.getByRole("heading", { name: "Stel je bestelling samen" })).toBeVisible();

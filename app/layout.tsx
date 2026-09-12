@@ -7,6 +7,7 @@ import { MobileActionBar } from "@/components/layout/MobileActionBar";
 import { CartProvider } from "@/lib/cart-context";
 import { ToastProvider } from "@/lib/toast-context";
 import { ItemDialogProvider } from "@/lib/item-dialog-context";
+import { CartDrawerProvider } from "@/lib/cart-drawer-context";
 import { business } from "@/data/business";
 import { JsonLd } from "@/components/JsonLd";
 import { basePath } from "@/lib/base-path";
@@ -69,12 +70,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <CartProvider>
           <ToastProvider>
             <ItemDialogProvider>
-              <Header />
-              <main id="main-content" className="flex-1 pb-20 lg:pb-0">
-                {children}
-              </main>
-              <Footer />
-              <MobileActionBar />
+              <CartDrawerProvider>
+                <Header />
+                <main id="main-content" className="flex-1 pb-20 lg:pb-0">
+                  {children}
+                </main>
+                <Footer />
+                <MobileActionBar />
+              </CartDrawerProvider>
             </ItemDialogProvider>
           </ToastProvider>
         </CartProvider>

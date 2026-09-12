@@ -3,15 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
+import { useCartDrawer } from "@/lib/cart-drawer-context";
 import { formatPrice } from "@/lib/format";
 import { telHref } from "@/data/navigation";
 import { CartBadge } from "@/components/ui/CartBadge";
+import { track } from "@/lib/analytics";
 
 export function MobileActionBar() {
-  const { itemCount, subtotal } = useCart();
+  const { itemCount, subtotal, hydrated } = useCart();
+  const { open: openCartDrawer } = useCartDrawer();
   const pathname = usePathname();
 
   if (pathname.startsWith("/checkout")) return null;
+
+  const menuActive = pathname === "/menu" || pathname.startsWith("/menu/");
+  const hasItems = hydrated && itemCount > 0;
 
   return (
     <nav
@@ -21,19 +27,36 @@ export function MobileActionBar() {
     >
       <Link
         href="/menu"
-        className="flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-xs font-medium text-charcoal/80"
+        aria-current={menuActive ? "page" : undefined}
+        className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-xs font-medium transition-colors ${
+          menuActive ? "bg-forest/10 text-forest" : "text-charcoal/80"
+        }`}
       >
         <IconMenu />
         Menu
       </Link>
-      <Link
-        href="/bestellen"
-        className="relative flex min-h-11 flex-[1.4] flex-col items-center justify-center gap-0.5 rounded-xl bg-orange py-1.5 text-xs font-semibold text-warm-white"
-      >
-        <IconCart />
-        {itemCount > 0 ? `Bestelling · ${formatPrice(subtotal)}` : "Bestellen"}
-        <CartBadge count={itemCount} />
-      </Link>
+      {hasItems ? (
+        <button
+          type="button"
+          onClick={() => {
+            track("cart_opened", { source: "bottom_nav" });
+            openCartDrawer();
+          }}
+          className="relative flex min-h-11 flex-[1.4] flex-col items-center justify-center gap-0.5 rounded-xl bg-orange py-1.5 text-xs font-semibold text-warm-white"
+        >
+          <IconCart />
+          {`Bestelling · ${formatPrice(subtotal)}`}
+          <CartBadge count={itemCount} />
+        </button>
+      ) : (
+        <Link
+          href="/bestellen"
+          className="relative flex min-h-11 flex-[1.4] flex-col items-center justify-center gap-0.5 rounded-xl bg-orange py-1.5 text-xs font-semibold text-warm-white"
+        >
+          <IconCart />
+          Bestellen
+        </Link>
+      )}
       <a
         href={telHref}
         className="flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-1.5 text-xs font-medium text-charcoal/80"

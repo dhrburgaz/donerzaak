@@ -18,7 +18,7 @@ export function CartSummary({ onCheckout }: { onCheckout?: () => void }) {
     return (
       <EmptyState
         title="Je bestelling is nog leeg"
-        description="Voeg gerechten toe vanuit het menu hiernaast om te beginnen."
+        description="Voeg gerechten toe via het menu om te beginnen."
       />
     );
   }
